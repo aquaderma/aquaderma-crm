@@ -1,0 +1,2101 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Aquaderma CRM Clínico</title>
+<style>
+  :root{
+    --green-dark:#3F6B4C;
+    --green-med:#73A082;
+    --green-pastel:#C3DCC5;
+    --green-pale:#E6F0E3;
+    --cream:#F4EFE2;
+    --cream-light:#FBF8F1;
+    --bg-main:#6f857a;
+    --text-on-bg: #F7F5EC;
+    --text-on-bg-soft: #D8DED4;
+    --white:#FFFFFF;
+    --ink:#2E3A2B;
+    --ink-soft:#697566;
+    --red-alert:#C25450;
+    --red-bg:#F8E4E2;
+    --orange-mid:#D98A3D;
+    --orange-bg:#FBEBD9;
+    --yellow-soon:#CFA23B;
+    --yellow-bg:#FAF1DA;
+    --blue-info:#4D7AA8;
+    --blue-bg:#E5EEF6;
+    --green-ok:#4F8D63;
+    --green-ok-bg:#E1EFE3;
+    --grey-bg:#EEEEEA;
+    --grey-text:#8C8C84;
+    --shadow: 0 2px 14px rgba(63,107,76,0.10);
+    --shadow-lg: 0 16px 50px rgba(40,60,40,0.20);
+    --radius: 16px;
+    --radius-sm: 10px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
+  html,body{margin:0; padding:0;}
+  body{
+    font-family:-apple-system,"Avenir Next","Segoe UI",sans-serif;
+    background: var(--bg-main);
+    color:var(--ink);
+    min-height:100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ============ APP SHELL ============ */
+  .app{
+    max-width:1280px;
+    margin:0 auto;
+    min-height:100vh;
+    background: var(--bg-main);
+    display:flex;
+    flex-direction:column;
+  }
+
+  /* ============ TOP BAR ============ */
+  .topbar{
+    background: linear-gradient(135deg, var(--green-dark) 0%, #4d7d5a 100%);
+    color:white;
+    padding: 14px 18px;
+    position:sticky;
+    top:0;
+    z-index:50;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+  }
+  .topbar-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+  }
+  .topbar h1{
+    font-size:1.15rem;
+    margin:0;
+    font-weight:700;
+  }
+  .topbar .sub{
+    font-size:0.7rem;
+    opacity:0.85;
+  }
+  .view-toggle{
+    display:flex;
+    gap:4px;
+    background:rgba(255,255,255,0.15);
+    border-radius:10px;
+    padding:3px;
+  }
+  .view-toggle button{
+    background:transparent;
+    border:none;
+    color:white;
+    padding:7px 12px;
+    border-radius:8px;
+    font-size:0.78rem;
+    font-weight:600;
+    cursor:pointer;
+    opacity:0.7;
+  }
+  .view-toggle button.active{
+    background:rgba(255,255,255,0.22);
+    opacity:1;
+  }
+  .logout-btn{
+    background:rgba(255,255,255,0.14);
+    border:none; color:white;
+    width:34px; height:34px;
+    border-radius:50%;
+    font-size:1rem;
+    cursor:pointer;
+    flex-shrink:0;
+  }
+
+  .kpi-strip{
+    display:flex;
+    gap:8px;
+    overflow-x:auto;
+    margin-top:12px;
+    padding-bottom:2px;
+    scrollbar-width:none;
+  }
+  .kpi-strip::-webkit-scrollbar{display:none;}
+  .kpi-pill{
+    background:rgba(255,255,255,0.14);
+    border-radius:10px;
+    padding:7px 12px;
+    font-size:0.7rem;
+    white-space:nowrap;
+    flex-shrink:0;
+    cursor:pointer;
+    border: 1.5px solid transparent;
+    transition: all .15s;
+  }
+  .kpi-pill.active-filter{
+    background:rgba(255,255,255,0.28);
+    border-color: rgba(255,255,255,0.5);
+  }
+  .kpi-pill b{
+    display:block;
+    font-size:1rem;
+  }
+
+  /* ============ MAIN CONTENT ============ */
+  .main{
+    flex:1;
+    padding: 14px;
+    padding-bottom: 90px;
+  }
+
+  /* ============ SEARCH & FILTERS ============ */
+  .search-bar{
+    display:flex;
+    gap:8px;
+    margin-bottom:12px;
+  }
+  .search-input{
+    flex:1;
+    padding:13px 16px;
+    border-radius:14px;
+    border:1.5px solid var(--green-pastel);
+    background:var(--white);
+    font-size:1rem;
+    outline:none;
+  }
+  .search-input:focus{ border-color: var(--green-med); }
+  .filter-btn{
+    width:48px;
+    height:48px;
+    border-radius:14px;
+    border:1.5px solid var(--green-pastel);
+    background:var(--white);
+    font-size:1.1rem;
+    cursor:pointer;
+    flex-shrink:0;
+    position:relative;
+  }
+  .filter-btn.has-filters{
+    border-color: var(--green-dark);
+    background: var(--green-pale);
+  }
+  .filter-badge{
+    position:absolute;
+    top:-4px; right:-4px;
+    background:var(--red-alert);
+    color:white;
+    font-size:0.6rem;
+    font-weight:700;
+    border-radius:50%;
+    width:16px;height:16px;
+    display:flex;align-items:center;justify-content:center;
+  }
+
+  .quick-chips{
+    display:flex;
+    gap:6px;
+    overflow-x:auto;
+    margin-bottom:12px;
+    scrollbar-width:none;
+  }
+  .quick-chips::-webkit-scrollbar{display:none;}
+  .chip{
+    padding:7px 13px;
+    border-radius:999px;
+    border:1.5px solid var(--green-pastel);
+    background:var(--white);
+    font-size:0.76rem;
+    color:var(--ink-soft);
+    white-space:nowrap;
+    cursor:pointer;
+    flex-shrink:0;
+  }
+  .chip.active{
+    background:var(--green-dark);
+    color:white;
+    border-color:var(--green-dark);
+  }
+
+  .results-count{
+    font-size:0.78rem;
+    color:var(--text-on-bg-soft);
+    margin-bottom:10px;
+  }
+
+  /* ============ PATIENT CARDS (mobile list) ============ */
+  .patient-list{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .patient-card{
+    background:var(--white);
+    border-radius:var(--radius-sm);
+    padding:13px 15px;
+    box-shadow:var(--shadow);
+    cursor:pointer;
+    border-left: 4px solid var(--grey-bg);
+    transition: transform .1s;
+  }
+  .patient-card:active{ transform: scale(0.98); }
+  .patient-card.urgent-now{ border-left-color: var(--red-alert); }
+  .patient-card.urgent-soon{ border-left-color: var(--yellow-soon); }
+  .patient-card.vip{ border-left-color: var(--green-dark); }
+
+  .pc-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:8px;
+  }
+  .pc-name{
+    font-weight:700;
+    font-size:0.95rem;
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .pc-name .alert-icon{ color: var(--red-alert); font-size:0.85rem; }
+  .pc-spend{
+    font-size:0.82rem;
+    font-weight:700;
+    color:var(--green-dark);
+    white-space:nowrap;
+  }
+  .pc-meta{
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap;
+    margin-top:7px;
+  }
+  .badge{
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+    padding:3px 9px;
+    border-radius:999px;
+    font-size:0.68rem;
+    font-weight:600;
+    white-space:nowrap;
+  }
+  .badge-vip{ background:var(--green-ok-bg); color:var(--green-ok); }
+  .badge-riesgo{ background:var(--red-bg); color:var(--red-alert); }
+  .badge-frecuente{ background:var(--yellow-bg); color:#9C7A2E; }
+  .badge-nuevo{ background:var(--blue-bg); color:var(--blue-info); }
+  .badge-unica{ background:var(--grey-bg); color:var(--grey-text); }
+  .badge-inactivo{ background:var(--grey-bg); color:var(--grey-text); }
+  .badge-regular{ background:var(--green-pale); color:var(--green-dark); }
+  .badge-ortho-active{ background: var(--orange-bg); color: var(--orange-mid); }
+  .badge-cita-confirmada{ background: var(--blue-bg); color: var(--blue-info); }
+
+  .pc-next{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    margin-top:8px;
+    font-size:0.76rem;
+    color:var(--ink-soft);
+  }
+  .urgency-dot{ width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .dot-now{ background:var(--red-alert); }
+  .dot-soon{ background:var(--yellow-soon); }
+  .dot-month{ background:var(--green-med); }
+  .dot-stale-mid{ background:var(--orange-mid); }
+  .dot-stale-long{ background: var(--grey-text); }
+  .dot-far{ background:#CCC; }
+  .dot-none{ background:#EEE; border:1px solid #DDD; }
+
+  .empty-state{
+    text-align:center;
+    padding:60px 20px;
+    color:var(--text-on-bg-soft);
+  }
+  .empty-state .icon{ font-size:2.5rem; margin-bottom:10px; }
+
+  /* ============ BOTTOM NAV (mobile) ============ */
+  .bottom-nav{
+    position:fixed;
+    bottom:0; left:0; right:0;
+    background:var(--white);
+    border-top:1px solid var(--cream);
+    display:flex;
+    justify-content:space-around;
+    padding: 8px 0 max(8px, env(safe-area-inset-bottom));
+    box-shadow: 0 -4px 16px rgba(0,0,0,0.06);
+    max-width:1280px;
+    margin:0 auto;
+    z-index:40;
+  }
+  .nav-item{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:2px;
+    background:none;
+    border:none;
+    color:var(--ink-soft);
+    font-size:0.65rem;
+    padding:4px 14px;
+    cursor:pointer;
+  }
+  .nav-item .nav-icon{ font-size:1.25rem; }
+  .nav-item.active{ color:var(--green-dark); font-weight:700; }
+
+  /* ============ FILTER PANEL (overlay) ============ */
+  .filter-overlay{
+    position:fixed; inset:0;
+    background:rgba(46,58,43,0.45);
+    display:none;
+    z-index:200;
+    align-items:flex-end;
+    justify-content:center;
+  }
+  .filter-overlay.show{ display:flex; }
+  .filter-panel{
+    background:var(--white);
+    border-radius:22px 22px 0 0;
+    width:100%;
+    max-width:600px;
+    max-height:85vh;
+    overflow-y:auto;
+    padding:20px 18px max(20px, env(safe-area-inset-bottom));
+    animation: slideUp .2s ease-out;
+  }
+  @keyframes slideUp{ from{transform:translateY(100%);} to{transform:translateY(0);} }
+  .filter-panel-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:16px;
+  }
+  .filter-panel-header h3{ margin:0; font-size:1.1rem; }
+  .filter-clear-btn{
+    background:none; border:none; color:var(--green-dark);
+    font-size:0.85rem; font-weight:600; cursor:pointer;
+  }
+  .filter-section{ margin-bottom:18px; }
+  .filter-section-label{
+    font-size:0.78rem; font-weight:700; color:var(--ink-soft);
+    text-transform:uppercase; letter-spacing:0.4px; margin-bottom:9px;
+  }
+  .filter-options{
+    display:flex; flex-wrap:wrap; gap:7px;
+  }
+  .filter-option{
+    padding:8px 13px;
+    border-radius:999px;
+    border:1.5px solid var(--green-pastel);
+    background:var(--cream-light);
+    font-size:0.78rem;
+    cursor:pointer;
+    color:var(--ink);
+  }
+  .filter-option.selected{
+    background:var(--green-dark);
+    color:white;
+    border-color:var(--green-dark);
+  }
+  .filter-apply-btn{
+    width:100%;
+    padding:14px;
+    border-radius:14px;
+    border:none;
+    background:var(--green-dark);
+    color:white;
+    font-weight:700;
+    font-size:0.95rem;
+    cursor:pointer;
+    margin-top:6px;
+  }
+  .treatment-search-mini{
+    width:100%;
+    padding:9px 13px;
+    border-radius:10px;
+    border:1.5px solid var(--green-pastel);
+    margin-bottom:9px;
+    font-size:0.82rem;
+  }
+
+  /* ============ PROFILE MODAL ============ */
+  .profile-overlay{
+    position:fixed; inset:0;
+    background:rgba(46,58,43,0.5);
+    display:none;
+    z-index:300;
+    align-items:flex-start;
+    justify-content:center;
+    overflow-y:auto;
+    padding: 0;
+  }
+  .profile-overlay.show{ display:flex; }
+  .profile-sheet{
+    background:var(--cream-light);
+    width:100%;
+    max-width:680px;
+    min-height:100vh;
+    animation: slideUp .2s ease-out;
+  }
+  @media (min-width: 720px){
+    .profile-overlay{ align-items:center; padding:24px; }
+    .profile-sheet{ min-height:auto; max-height:90vh; overflow-y:auto; border-radius:22px; box-shadow:var(--shadow-lg); }
+  }
+
+  .profile-header{
+    background: linear-gradient(135deg, var(--green-dark), #538560);
+    color:white;
+    padding:20px 18px 24px;
+    position:sticky;
+    top:0;
+    z-index:10;
+  }
+  .profile-header-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+  }
+  .profile-close-btn{
+    background:rgba(255,255,255,0.2);
+    border:none; color:white;
+    width:34px;height:34px;
+    border-radius:50%;
+    font-size:1.1rem;
+    cursor:pointer;
+    flex-shrink:0;
+  }
+  .profile-name{ font-size:1.35rem; font-weight:700; margin:8px 0 4px; }
+  .profile-badges{ display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
+  .profile-badge{
+    background:rgba(255,255,255,0.2);
+    padding:4px 11px;
+    border-radius:999px;
+    font-size:0.72rem;
+    font-weight:600;
+  }
+
+  .profile-body{ padding:16px; }
+
+  .medical-alert-box{
+    background: var(--red-bg);
+    border: 2px solid var(--red-alert);
+    border-radius:14px;
+    padding:14px 16px;
+    margin-bottom:16px;
+  }
+  .medical-alert-box .title{
+    font-weight:700; color:var(--red-alert);
+    font-size:0.85rem; margin-bottom:8px;
+    display:flex; align-items:center; gap:6px;
+  }
+  .medical-alert-item{ font-size:0.82rem; margin-bottom:5px; line-height:1.4; }
+  .medical-alert-item b{ color: #8a342f; }
+
+  .next-due-card{
+    border-radius:14px;
+    padding:15px 16px;
+    margin-bottom:16px;
+    border: 1.5px solid var(--green-pastel);
+    background: var(--green-pale);
+  }
+  .next-due-card.urgent{ background:var(--red-bg); border-color:var(--red-alert); }
+  .next-due-card.soon{ background:var(--yellow-bg); border-color:var(--yellow-soon); }
+  .next-due-card.stale{ background:var(--grey-bg); border-color:#ccc; }
+  .next-due-card .label{ font-size:0.7rem; text-transform:uppercase; color:var(--ink-soft); margin-bottom:4px; font-weight:700;}
+  .next-due-card .main{ font-size:1rem; font-weight:700; margin-bottom:3px; }
+  .next-due-card .sub{ font-size:0.78rem; color:var(--ink-soft); }
+
+  .confirmed-appt-box{
+    border-radius:14px;
+    padding:15px 16px;
+    margin-bottom:16px;
+    border: 2px solid var(--blue-info);
+    background: var(--blue-bg);
+  }
+  .confirmed-appt-box .label{ font-size:0.7rem; text-transform:uppercase; color:var(--blue-info); margin-bottom:4px; font-weight:700;}
+  .confirmed-appt-box .main{ font-size:1.05rem; font-weight:700; margin-bottom:3px; color:#1f3f5c; }
+  .confirmed-appt-box .sub{ font-size:0.78rem; color:#3a5876; }
+
+  .info-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-bottom:16px;
+  }
+  .info-item{
+    background:var(--white);
+    border-radius:12px;
+    padding:11px 13px;
+  }
+  .info-item .label{ font-size:0.68rem; color:var(--ink-soft); text-transform:uppercase; margin-bottom:3px;}
+  .info-item .value{ font-size:0.9rem; font-weight:700; }
+
+  .actions-row{ display:flex; gap:9px; margin-bottom:18px; }
+  .action-btn{
+    flex:1; padding:12px; border-radius:12px; border:none;
+    font-weight:700; font-size:0.82rem; cursor:pointer;
+    text-align:center; text-decoration:none;
+    display:flex; align-items:center; justify-content:center; gap:6px;
+  }
+  .btn-whatsapp{ background:#4FB35E; color:white; }
+  .btn-email{ background:var(--green-med); color:white; }
+  .btn-disabled{ background:#EEE; color:#AAA; }
+  .btn-edit{ background:var(--ink-soft); color:white; flex:0 0 auto; padding:12px 16px;}
+
+  .edit-form-overlay{
+    position:fixed; inset:0;
+    background:rgba(46,58,43,0.55);
+    display:none;
+    z-index:400;
+    align-items:flex-end;
+    justify-content:center;
+  }
+  .edit-form-overlay.show{ display:flex; }
+  .edit-form-panel{
+    background:var(--white);
+    border-radius:22px 22px 0 0;
+    width:100%;
+    max-width:520px;
+    max-height:88vh;
+    overflow-y:auto;
+    padding:20px 18px max(20px, env(safe-area-inset-bottom));
+    animation: slideUp .2s ease-out;
+  }
+  @media (min-width:720px){
+    .edit-form-overlay{ align-items:center; padding:24px; }
+    .edit-form-panel{ border-radius:20px; }
+  }
+  .edit-form-header{
+    display:flex; justify-content:space-between; align-items:center;
+    margin-bottom:16px;
+  }
+  .edit-form-header h3{ margin:0; font-size:1.05rem; }
+  .edit-field{ margin-bottom:14px; }
+  .edit-field label{
+    display:block; font-size:0.75rem; font-weight:700; color:var(--ink-soft);
+    text-transform:uppercase; letter-spacing:0.3px; margin-bottom:5px;
+  }
+  .edit-field input, .edit-field textarea, .edit-field select{
+    width:100%; padding:11px 13px; border-radius:10px;
+    border:1.5px solid var(--green-pastel); font-size:0.92rem;
+    font-family:inherit; background:var(--cream-light);
+  }
+  .edit-field select{ cursor:pointer; }
+  .edit-field input:disabled{ color:var(--ink-soft); background:var(--grey-bg); }
+  .edit-field textarea{ resize:vertical; }
+  .edit-hint{ font-size:0.7rem; color:var(--ink-soft); margin-top:4px; }
+  .edit-save-status{ min-height:20px; font-size:0.82rem; font-weight:600; text-align:center; margin-top:8px; }
+  .edit-save-status.saving{ color:var(--ink-soft); }
+  .edit-save-status.success{ color:var(--green-ok); }
+  .edit-save-status.error{ color:var(--red-alert); }
+  .edit-form-note{ font-size:0.7rem; color:var(--ink-soft); text-align:center; margin-top:10px; }
+
+  .section-block{ margin-bottom:18px; }
+  .section-title{
+    font-size:0.78rem; text-transform:uppercase; color:var(--ink-soft);
+    font-weight:700; letter-spacing:0.4px; margin-bottom:10px;
+    display:flex; align-items:center; gap:6px;
+  }
+  .tag-list{ display:flex; flex-wrap:wrap; gap:6px; }
+  .tag{ background:var(--white); padding:5px 11px; border-radius:999px; font-size:0.74rem; color:var(--ink); border:1px solid var(--green-pastel);}
+
+  .history-item{
+    background:var(--white);
+    border-radius:10px;
+    padding:10px 12px;
+    margin-bottom:6px;
+    font-size:0.82rem;
+  }
+  .history-item .h-date{ color:var(--ink-soft); font-size:0.72rem; display:block; margin-bottom:2px; }
+
+  .products-box{
+    background:var(--blue-bg);
+    border-radius:10px;
+    padding:10px 13px;
+    font-size:0.8rem;
+    color: #2d5276;
+  }
+
+  /* ============ DIAGRAM / ANALYTICS VIEW ============ */
+  .analytics-section{ margin-bottom:22px; }
+  .analytics-title{
+    font-size:0.95rem; font-weight:700; color:var(--text-on-bg);
+    margin-bottom:12px;
+  }
+  .bar-chart{ display:flex; flex-direction:column; gap:8px; }
+  .bar-row{ display:flex; align-items:center; gap:8px; }
+  .bar-label{ font-size:0.74rem; width:150px; flex-shrink:0; color:var(--text-on-bg-soft); text-align:right;}
+  .bar-track{ flex:1; background:var(--grey-bg); border-radius:6px; height:22px; position:relative; overflow:hidden; }
+  .bar-fill{ height:100%; border-radius:6px; display:flex; align-items:center; padding-left:8px;}
+  .bar-value{ font-size:0.7rem; color:white; font-weight:700; }
+  .bar-value.outside{ color: var(--ink); position:absolute; left: calc(100% + 6px); top:50%; transform:translateY(-50%);}
+
+  .stat-card-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px;}
+  .stat-card{ background:white; border-radius:14px; padding:16px; box-shadow:var(--shadow); }
+  .stat-card .num{ font-size:1.6rem; font-weight:800; color:var(--green-dark); }
+  .stat-card .lbl{ font-size:0.74rem; color:var(--ink-soft); margin-top:2px;}
+
+  @media (min-width:720px){
+    .patient-list{
+      display:grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap:10px;
+    }
+    .stat-card-grid{ grid-template-columns: repeat(4, 1fr); }
+  }
+
+  /* ============ GANTT CHART (Contacto y seguimiento) ============ */
+  .gantt-wrap{ display:flex; flex-direction:column; gap:3px; }
+  .gantt-row{
+    display:grid;
+    grid-template-columns: 180px 1fr 110px;
+    align-items:center;
+    gap:10px;
+    background:white;
+    border-radius:8px;
+    padding:8px 10px;
+    cursor:pointer;
+    font-size:0.78rem;
+  }
+  .gantt-name{
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    font-weight:600;
+  }
+  .gantt-cat{
+    display:block;
+    font-size:0.65rem;
+    font-weight:400;
+    color:var(--ink-soft);
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .gantt-track{
+    position:relative;
+    height:18px;
+    background:var(--grey-bg);
+    border-radius:6px;
+    overflow:hidden;
+  }
+  .gantt-today-line{
+    position:absolute; top:-3px; bottom:-3px;
+    width:2px; background:var(--ink); opacity:0.4;
+  }
+  .gantt-bar{
+    position:absolute; top:0; bottom:0;
+    border-radius:6px; opacity:0.35;
+  }
+  .gantt-marker{
+    position:absolute; top:-2px;
+    width:8px; height:22px;
+    border-radius:3px;
+    transform:translateX(-50%);
+  }
+  .gantt-actions{
+    display:flex; align-items:center; justify-content:flex-end; gap:8px;
+  }
+  .gantt-days{ font-weight:700; font-size:0.74rem; white-space:nowrap; }
+  .gantt-wa-btn{
+    background:#4FB35E; color:white; border-radius:8px;
+    width:26px; height:26px; display:flex; align-items:center; justify-content:center;
+    text-decoration:none; font-size:0.85rem; flex-shrink:0;
+  }
+  .gantt-wa-btn.disabled{ background:#EEE; color:#AAA; }
+  .gantt-phone{ font-size:0.68rem; color:var(--ink-soft); white-space:nowrap; }
+  .gantt-axis{
+    display:flex; justify-content:space-between;
+    font-size:0.7rem; color:var(--text-on-bg-soft);
+    margin-bottom:10px; padding:0 4px;
+  }
+  .gantt-axis-today{ font-weight:700; color:var(--text-on-bg); }
+  .gantt-bucket{ margin-bottom:18px; }
+  .gantt-bucket-title{
+    font-size:0.82rem; font-weight:700; color:var(--text-on-bg);
+    margin-bottom:8px; padding-left:2px;
+  }
+  .gantt-bucket-count{ font-weight:400; color:var(--text-on-bg-soft); }
+  .gantt-more{
+    text-align:center; padding:8px; font-size:0.74rem;
+    color:var(--text-on-bg-soft); background:rgba(255,255,255,0.08);
+    border-radius:8px;
+  }
+  @media (max-width:600px){
+    .gantt-row{ grid-template-columns: 120px 1fr 70px; font-size:0.7rem; }
+    .gantt-actions{ gap:4px; }
+    .gantt-phone{ display:none; }
+  }
+
+  /* ============ LOGIN SCREEN ============ */
+  .login-screen{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background: linear-gradient(135deg, var(--green-dark), #2f5239);
+    padding:20px;
+  }
+  .login-card{
+    background:white;
+    border-radius:22px;
+    padding:36px 28px;
+    max-width:380px;
+    width:100%;
+    box-shadow: var(--shadow-lg);
+    text-align:center;
+  }
+  .login-logo{ font-size:2.5rem; margin-bottom:8px; }
+  .login-card h2{ margin:0 0 4px; color:var(--ink); }
+  .login-sub{ color:var(--ink-soft); font-size:0.85rem; margin-bottom:22px; }
+  .login-card input{
+    width:100%; padding:13px 15px; border-radius:12px;
+    border:1.5px solid var(--green-pastel); margin-bottom:12px;
+    font-size:0.95rem; background:var(--cream-light);
+  }
+  .login-card button{
+    width:100%; padding:14px; border-radius:12px; border:none;
+    background:var(--green-dark); color:white; font-weight:700;
+    font-size:0.95rem; cursor:pointer; margin-top:4px;
+  }
+  .login-card button:disabled{ background:#ccc; cursor:not-allowed; }
+  .login-error{ color:var(--red-alert); font-size:0.82rem; margin-top:10px; min-height:18px; }
+  .login-footer{ font-size:0.7rem; color:var(--ink-soft); margin-top:18px; line-height:1.4; }
+  .login-guest-btn{
+    background:none !important; color:var(--green-dark) !important;
+    border:1.5px solid var(--green-pastel) !important; margin-top:8px !important;
+  }
+
+  .readonly-banner{
+    background: var(--yellow-bg);
+    color: #8A6A1E;
+    font-size:0.78rem;
+    text-align:center;
+    padding:8px 14px;
+    font-weight:600;
+  }
+  .loading-overlay{
+    position:fixed; inset:0; background:var(--cream);
+    display:flex; align-items:center; justify-content:center;
+    flex-direction:column; gap:14px; z-index:500;
+  }
+  .loading-spinner{
+    width:36px; height:36px; border:4px solid var(--green-pastel);
+    border-top-color:var(--green-dark); border-radius:50%;
+    animation: spin .8s linear infinite;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div class="login-screen" id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">🌿</div>
+    <h2>Aquaderma CRM</h2>
+    <p class="login-sub">Ingresa con tu cuenta para continuar</p>
+    <input type="email" id="loginEmail" placeholder="Correo electrónico" autocomplete="email">
+    <input type="password" id="loginPassword" placeholder="Contraseña" autocomplete="current-password">
+    <button id="loginBtn">Ingresar</button>
+    <button id="guestBtn" class="login-guest-btn">Entrar solo para ver (sin editar)</button>
+    <div id="loginError" class="login-error"></div>
+    <div class="login-footer">Acceso de solo lectura disponible para todo el equipo. Edición restringida a administradores.</div>
+  </div>
+</div>
+
+<div class="app" id="appShell" style="display:none;">
+  <div class="topbar">
+    <div class="topbar-row">
+      <div>
+        <h1>🌿 Aquaderma CRM</h1>
+        <div class="sub">Base clínica + financiera · 2,425 pacientes</div>
+      </div>
+      <div class="view-toggle" id="viewToggle">
+        <button data-view="lista" class="active">Lista</button>
+        <button data-view="analytics">Análisis</button>
+        <button data-view="gantt">Contacto</button>
+      </div>
+      <button class="logout-btn" id="logoutBtn" title="Cerrar sesión">⏻</button>
+    </div>
+    <div class="kpi-strip" id="kpiStrip"></div>
+  </div>
+
+  <div class="readonly-banner" id="readonlyBanner" style="display:none;">
+    👁️ Modo solo lectura — inicia sesión con cuenta de administrador para editar fichas
+  </div>
+
+  <div class="main">
+
+    <div id="listaView">
+      <div class="search-bar">
+        <input type="text" id="searchInput" class="search-input" placeholder="🔍 Buscar paciente por nombre o RUT...">
+        <button class="filter-btn" id="filterBtn">⚙️<span class="filter-badge" id="filterBadge" style="display:none;">0</span></button>
+      </div>
+
+      <div class="quick-chips" id="quickChips"></div>
+
+      <div class="results-count" id="resultsCount"></div>
+
+      <div class="patient-list" id="patientList"></div>
+      <div class="empty-state" id="emptyState" style="display:none;">
+        <div class="icon">🔍</div>
+        <div>No se encontraron pacientes con esos filtros</div>
+      </div>
+    </div>
+
+    <div id="analyticsView" style="display:none;"></div>
+    <div id="ganttView" style="display:none;"></div>
+
+  </div>
+
+  <div class="bottom-nav">
+    <button class="nav-item active" data-nav="todos">
+      <span class="nav-icon">👥</span>Todos
+    </button>
+    <button class="nav-item" data-nav="urgentes">
+      <span class="nav-icon">🔴</span>Urgentes
+    </button>
+    <button class="nav-item" data-nav="vip">
+      <span class="nav-icon">⭐</span>VIP
+    </button>
+    <button class="nav-item" data-nav="membresia">
+      <span class="nav-icon">💳</span>Membresía
+    </button>
+    <button class="nav-item" data-nav="alertas">
+      <span class="nav-icon">⚕️</span>Alertas
+    </button>
+  </div>
+</div>
+
+<!-- FILTER PANEL -->
+<div class="filter-overlay" id="filterOverlay">
+  <div class="filter-panel">
+    <div class="filter-panel-header">
+      <h3>Filtros</h3>
+      <button class="filter-clear-btn" id="clearFiltersBtn">Limpiar todo</button>
+    </div>
+
+    <div class="filter-section">
+      <div class="filter-section-label">Tratamiento</div>
+      <input type="text" class="treatment-search-mini" id="treatmentSearchMini" placeholder="Buscar tratamiento...">
+      <div class="filter-options" id="treatmentOptions"></div>
+    </div>
+
+    <div class="filter-section">
+      <div class="filter-section-label">Segmento</div>
+      <div class="filter-options" id="segmentOptions"></div>
+    </div>
+
+    <div class="filter-section">
+      <div class="filter-section-label">Urgencia de contacto</div>
+      <div class="filter-options" id="urgencyOptions"></div>
+    </div>
+
+    <div class="filter-section">
+      <div class="filter-section-label">Profesional</div>
+      <div class="filter-options" id="profOptions"></div>
+    </div>
+
+    <div class="filter-section">
+      <div class="filter-section-label">Género</div>
+      <div class="filter-options" id="genderOptions"></div>
+    </div>
+
+    <button class="filter-apply-btn" id="applyFiltersBtn">Ver resultados</button>
+  </div>
+</div>
+
+<!-- PROFILE MODAL -->
+<div class="profile-overlay" id="profileOverlay">
+  <div class="profile-sheet" id="profileSheet"></div>
+</div>
+
+<!-- EDIT FORM MODAL -->
+<div class="edit-form-overlay" id="editFormOverlay">
+  <div class="edit-form-panel">
+    <div class="edit-form-header">
+      <h3>Editar ficha</h3>
+      <button class="profile-close-btn" id="closeEditFormBtn" style="background:rgba(0,0,0,0.08); color:var(--ink);">✕</button>
+    </div>
+    <div id="editFormBody"></div>
+    <button class="filter-apply-btn" id="saveEditBtn">Guardar cambios</button>
+    <div class="edit-form-note">Los cambios se guardan en este navegador y persisten al recargar la página.</div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, getDocs, doc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, signInAnonymously, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+const ADMIN_EMAILS = ['manager@aquaderma.cl', 'aquadent.clinica@gmail.com'];
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCa01wMNsXvBdXPxzA3zeAhkf1rptM_mgw",
+  authDomain: "aquaderma-12ca6.firebaseapp.com",
+  projectId: "aquaderma-12ca6",
+  storageBucket: "aquaderma-12ca6.firebasestorage.app",
+  messagingSenderId: "342970042682",
+  appId: "1:342970042682:web:2b7797a0d92facc4e7a803"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+// All app code lives in this same module, in the same script tag, so there is no
+// possible race condition between "Firebase is ready" and "app code runs" —
+// db/auth/ADMIN_EMAILS are real local variables available immediately to everything below.
+
+// ============================================================
+// FIREBASE: AUTH + DATA LOADING
+// (db, auth, ADMIN_EMAILS are real module-scope variables defined just above this
+// script, in the SAME <script type="module"> tag — no window bridge, no race condition,
+// no waiting for anything: by the time this line runs, they already exist.)
+// ============================================================
+let DATA = [];
+let currentUser = null;
+let isAdmin = false;
+let appStarted = false;
+
+async function loadPatientsFromFirestore(){
+  const snap = await getDocs(collection(db, 'pacientes'));
+  const docs = [];
+  snap.forEach(d => docs.push(d.data()));
+  return docs;
+}
+
+function showLoading(show){
+  let el = document.getElementById('loadingOverlay');
+  if(show){
+    if(!el){
+      el = document.createElement('div');
+      el.id = 'loadingOverlay';
+      el.className = 'loading-overlay';
+      el.innerHTML = '<div class="loading-spinner"></div><div>Cargando pacientes...</div>';
+      document.body.appendChild(el);
+    }
+  } else if(el){
+    el.remove();
+  }
+}
+
+async function startApp(user, readonly){
+  if(appStarted) return;
+  appStarted = true;
+  currentUser = user;
+  isAdmin = !readonly && !!user && ADMIN_EMAILS.includes(user.email);
+
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('appShell').style.display = '';
+  document.getElementById('readonlyBanner').style.display = isAdmin ? 'none' : 'flex';
+
+  showLoading(true);
+  try{
+    DATA = await loadPatientsFromFirestore();
+  }catch(e){
+    alert('Error cargando pacientes: ' + e.message);
+    showLoading(false);
+    appStarted = false;
+    return;
+  }
+  showLoading(false);
+
+  initApp();
+}
+
+let explicitLoginInProgress = false;
+
+function setupLoginHandlers(){
+  document.getElementById('loginBtn').addEventListener('click', async () => {
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const errorEl = document.getElementById('loginError');
+    errorEl.textContent = '';
+    if(!email || !password){
+      errorEl.textContent = 'Ingresa correo y contraseña.';
+      return;
+    }
+    explicitLoginInProgress = true;
+    try{
+      if(auth.currentUser && auth.currentUser.isAnonymous){
+        await signOut(auth);
+      }
+      const cred = await signInWithEmailAndPassword(auth, email, password);
+      await startApp(cred.user, false);
+    }catch(e){
+      errorEl.textContent = 'Correo o contraseña incorrectos.';
+    }finally{
+      explicitLoginInProgress = false;
+    }
+  });
+
+  document.getElementById('guestBtn').addEventListener('click', async () => {
+    try{
+      const cred = await signInAnonymously(auth);
+      startApp(cred.user, true);
+    }catch(e){
+      document.getElementById('loginError').textContent = 'No se pudo entrar como invitado: ' + e.message;
+    }
+  });
+}
+
+setupLoginHandlers();
+
+// If the user already has a valid Firebase session (e.g. returning visit), skip the login screen.
+onAuthStateChanged(auth, (user) => {
+  if(explicitLoginInProgress) return;
+  if(user && DATA.length === 0 && !appStarted){
+    const readonly = user.isAnonymous;
+    startApp(user, readonly);
+  }
+});
+
+
+const SEGMENT_BADGE = {
+  'VIP Activo': 'badge-vip',
+  'VIP en Riesgo (Reactivar)': 'badge-riesgo',
+  'Frecuente Activo': 'badge-frecuente',
+  'Frecuente en Riesgo': 'badge-riesgo',
+
+  'Nuevo (1ra visita reciente)': 'badge-nuevo',
+  'Visita Unica - No volvio': 'badge-unica',
+  'Regular Activo': 'badge-regular',
+  'Inactivo / Perdido': 'badge-inactivo',
+};
+
+const URGENCY_DOT = {
+  'ATRASADO - Contactar ya': 'dot-now',
+  'Proximo (0-14 dias)': 'dot-soon',
+  'Proximo mes': 'dot-month',
+  'Atrasado (3-12 meses vencido)': 'dot-stale-mid',
+  'Inactivo largo plazo (+1 año vencido)': 'dot-stale-long',
+  'Mas adelante': 'dot-far',
+  'Sin dato': 'dot-none',
+};
+
+const URGENCY_ORDER = {
+  'ATRASADO - Contactar ya': 0,
+  'Proximo (0-14 dias)': 1,
+  'Proximo mes': 2,
+  'Atrasado (3-12 meses vencido)': 3,
+  'Mas adelante': 4,
+  'Inactivo largo plazo (+1 año vencido)': 5,
+  'Sin dato': 6,
+};
+
+const SEGMENT_ORDER = ['VIP Activo','VIP en Riesgo (Reactivar)','Frecuente Activo','Frecuente en Riesgo',
+  'Regular Activo','Nuevo (1ra visita reciente)','Visita Unica - No volvio','Inactivo / Perdido'];
+
+// ============================================================
+// STATE
+// ============================================================
+let state = {
+  search: '',
+  segments: [],
+  urgencies: [],
+  treatments: [],
+  professionals: [],
+  genders: [],
+  navFilter: 'todos',
+  sort: 'gasto_desc',
+  currentView: 'lista',
+  ganttSearch: '',
+};
+
+// ============================================================
+// UTILITIES
+// ============================================================
+function money(n){ return '$' + n.toLocaleString('es-CL'); }
+function fmtDate(s){
+  if(!s) return '—';
+  const d = new Date(s + 'T00:00:00');
+  return d.toLocaleDateString('es-CL', {day:'2-digit', month:'2-digit', year:'numeric'});
+}
+function escapeHtml(str){
+  if(str==null) return '';
+  return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+// ============================================================
+// KPI STRIP
+// ============================================================
+function buildKPIs(){
+  const total = DATA.length;
+  const vipActivo = DATA.filter(p => p.segmento === 'VIP Activo').length;
+  const urgentNow = DATA.filter(p => p.urgencia === 'ATRASADO - Contactar ya').length;
+  const conAlerta = DATA.filter(p => p.tieneAlertaMedica).length;
+  const orthoActiva = DATA.filter(p => p.ortodonciaEstado === 'Activa').length;
+  const gastoTotal = DATA.reduce((s,p) => s + p.gastoTotal, 0);
+
+  const kpis = [
+    {label:'Pacientes', value: total.toLocaleString('es-CL'), nav: 'todos'},
+    {label:'Urgentes', value: urgentNow.toLocaleString('es-CL'), nav: 'urgentes'},
+    {label:'VIP Activos', value: vipActivo.toLocaleString('es-CL'), nav: 'vip'},
+    {label:'Ortodoncia activa', value: orthoActiva.toLocaleString('es-CL'), nav: 'ortodoncia'},
+    {label:'Con alerta médica', value: conAlerta.toLocaleString('es-CL'), nav: 'alertas'},
+    {label:'Gasto total', value: '$' + (gastoTotal/1e6).toFixed(0) + 'M', nav: null},
+  ];
+  document.getElementById('kpiStrip').innerHTML = kpis.map(k =>
+    `<div class="kpi-pill" data-nav="${k.nav||''}"><b>${k.value}</b>${k.label}</div>`
+  ).join('');
+
+  document.querySelectorAll('.kpi-pill[data-nav]').forEach(el => {
+    el.addEventListener('click', () => {
+      const nav = el.dataset.nav;
+      if(nav){ setNavFilter(nav); }
+    });
+  });
+}
+
+// ============================================================
+// QUICK CHIPS (common treatment searches)
+// ============================================================
+const QUICK_CHIPS = [
+  {label:'💉 Botox', cat:'Toxina Botulinica'},
+  {label:'🦷 Ortodoncia', cat:'Ortodoncia'},
+  {label:'✨ Bioestimulador', cat:'Bioestimulador (Sculptra/Lanluma)'},
+  {label:'👃 Rinomodelación', cat:'Rinomodelacion'},
+  {label:'💋 Labios', cat:'Labios (Acido Hialuronico)'},
+  {label:'🧊 Criolipólisis', cat:'Criolipolisis/Cooltech'},
+  {label:'🩺 Sueroterapia', cat:'Sueroterapia'},
+  {label:'🦷 Odontología', cat:'Odontologia General'},
+];
+
+function buildQuickChips(){
+  const container = document.getElementById('quickChips');
+  container.innerHTML = QUICK_CHIPS.map(c =>
+    `<button class="chip" data-cat="${escapeHtml(c.cat)}">${c.label}</button>`
+  ).join('');
+  container.querySelectorAll('.chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const cat = btn.dataset.cat;
+      const isActive = btn.classList.contains('active');
+      container.querySelectorAll('.chip').forEach(b => b.classList.remove('active'));
+      if(!isActive){
+        btn.classList.add('active');
+        state.treatments = [cat];
+      } else {
+        state.treatments = [];
+      }
+      render();
+    });
+  });
+}
+
+// ============================================================
+// NAV BAR
+// ============================================================
+function setNavFilter(nav){
+  state.navFilter = nav;
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.nav === nav));
+  // switch back to list view if coming from analytics
+  if(state.currentView !== 'lista'){
+    switchView('lista');
+  }
+  render();
+}
+
+document.querySelectorAll('.nav-item').forEach(btn => {
+  btn.addEventListener('click', () => setNavFilter(btn.dataset.nav));
+});
+
+// ============================================================
+// VIEW TOGGLE (Lista / Analytics)
+// ============================================================
+function switchView(view){
+  state.currentView = view;
+  document.getElementById('listaView').style.display = view === 'lista' ? '' : 'none';
+  document.getElementById('analyticsView').style.display = view === 'analytics' ? '' : 'none';
+  document.getElementById('ganttView').style.display = view === 'gantt' ? '' : 'none';
+  document.querySelectorAll('#viewToggle button').forEach(b => b.classList.toggle('active', b.dataset.view === view));
+  if(view === 'analytics'){
+    renderAnalytics();
+  }
+  if(view === 'gantt'){
+    renderGantt();
+  }
+}
+document.querySelectorAll('#viewToggle button').forEach(btn => {
+  btn.addEventListener('click', () => switchView(btn.dataset.view));
+});
+
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+  await signOut(auth);
+  DATA = [];
+  appStarted = false;
+  document.getElementById('appShell').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('loginEmail').value = '';
+  document.getElementById('loginPassword').value = '';
+});
+
+// ============================================================
+// FILTER PANEL
+// ============================================================
+function getAllTreatmentCategories(){
+  const set = new Set();
+  DATA.forEach(p => p.categorias.forEach(c => set.add(c)));
+  return Array.from(set).sort((a,b) => {
+    const countA = DATA.filter(p => p.categorias.includes(a)).length;
+    const countB = DATA.filter(p => p.categorias.includes(b)).length;
+    return countB - countA;
+  });
+}
+function getAllProfessionals(){
+  const set = new Set();
+  DATA.forEach(p => { if(p.profesionalPrincipal) set.add(p.profesionalPrincipal); });
+  return Array.from(set).sort();
+}
+
+// ============================================================
+// EDICIONES MANUALES (persistentes en Firestore, solo admin)
+// ============================================================
+let pendingEditId = null;
+
+function applyEditToPatient(id, edit){
+  const p = DATA.find(x => x.id === id);
+  if(!p) return;
+  if(edit.telefono !== undefined) p.telefono = edit.telefono || null;
+  if(edit.email !== undefined) p.email = edit.email || null;
+  if(edit.notaManual !== undefined) p.notaManual = edit.notaManual || null;
+  if(edit.nombre !== undefined) p.nombre = edit.nombre || p.nombre;
+  if(edit.rut !== undefined) p.rut = edit.rut || null;
+  if(edit.profesionalPrincipal !== undefined) p.profesionalPrincipal = edit.profesionalPrincipal || null;
+  if(edit.segmento !== undefined) p.segmento = edit.segmento || p.segmento;
+  p._editado = true;
+}
+
+async function saveEdit(id, fields){
+  if(!isAdmin){
+    console.warn('Solo administradores pueden editar.');
+    return false;
+  }
+  try{
+    const ref = doc(db, 'pacientes', id);
+    const payload = {...fields, _editado: true, _editadoPor: currentUser.email, _editadoFecha: new Date().toISOString()};
+    await updateDoc(ref, payload);
+    applyEditToPatient(id, fields);
+    return true;
+  }catch(e){
+    console.error('Error guardando edicion en Firestore', e);
+    return false;
+  }
+}
+
+let allTreatmentCats = [];
+function buildFilterPanel(){
+  allTreatmentCats = getAllTreatmentCategories();
+  renderTreatmentOptions(allTreatmentCats);
+
+  const segContainer = document.getElementById('segmentOptions');
+  segContainer.innerHTML = SEGMENT_ORDER.map(s =>
+    `<button class="filter-option" data-segment="${escapeHtml(s)}">${s}</button>`
+  ).join('');
+
+  const urgContainer = document.getElementById('urgencyOptions');
+  const urgList = ['ATRASADO - Contactar ya','Proximo (0-14 dias)','Proximo mes','Atrasado (3-12 meses vencido)','Inactivo largo plazo (+1 año vencido)'];
+  urgContainer.innerHTML = urgList.map(u =>
+    `<button class="filter-option" data-urgency="${escapeHtml(u)}">${u}</button>`
+  ).join('');
+
+  const profContainer = document.getElementById('profOptions');
+  const profs = getAllProfessionals();
+  profContainer.innerHTML = profs.map(p =>
+    `<button class="filter-option" data-prof="${escapeHtml(p)}">${p}</button>`
+  ).join('');
+
+  const genderContainer = document.getElementById('genderOptions');
+  const genderList = ['Femenino', 'Masculino', 'No determinado'];
+  genderContainer.innerHTML = genderList.map(g => {
+    const count = DATA.filter(p => p.genero === g).length;
+    return `<button class="filter-option" data-gender="${escapeHtml(g)}">${g} (${count})</button>`;
+  }).join('');
+
+  // Attach click handlers
+  document.querySelectorAll('#segmentOptions .filter-option').forEach(btn => {
+    btn.addEventListener('click', () => toggleFilterOption(btn, 'segments', btn.dataset.segment));
+  });
+  document.querySelectorAll('#urgencyOptions .filter-option').forEach(btn => {
+    btn.addEventListener('click', () => toggleFilterOption(btn, 'urgencies', btn.dataset.urgency));
+  });
+  document.querySelectorAll('#profOptions .filter-option').forEach(btn => {
+    btn.addEventListener('click', () => toggleFilterOption(btn, 'professionals', btn.dataset.prof));
+  });
+  document.querySelectorAll('#genderOptions .filter-option').forEach(btn => {
+    btn.addEventListener('click', () => toggleFilterOption(btn, 'genders', btn.dataset.gender));
+  });
+}
+
+function renderTreatmentOptions(cats){
+  const container = document.getElementById('treatmentOptions');
+  container.innerHTML = cats.slice(0, 40).map(c => {
+    const count = DATA.filter(p => p.categorias.includes(c)).length;
+    const selected = state.treatments.includes(c) ? 'selected' : '';
+    return `<button class="filter-option ${selected}" data-treatment="${escapeHtml(c)}">${c} (${count})</button>`;
+  }).join('');
+  container.querySelectorAll('.filter-option').forEach(btn => {
+    btn.addEventListener('click', () => toggleFilterOption(btn, 'treatments', btn.dataset.treatment));
+  });
+}
+
+function toggleFilterOption(btn, stateKey, value){
+  const idx = state[stateKey].indexOf(value);
+  if(idx === -1){
+    state[stateKey].push(value);
+    btn.classList.add('selected');
+  } else {
+    state[stateKey].splice(idx, 1);
+    btn.classList.remove('selected');
+  }
+  updateFilterBadge();
+}
+
+function updateFilterBadge(){
+  const total = state.segments.length + state.urgencies.length + state.treatments.length + state.professionals.length + state.genders.length;
+  const badge = document.getElementById('filterBadge');
+  const btn = document.getElementById('filterBtn');
+  if(total > 0){
+    badge.style.display = 'flex';
+    badge.textContent = total;
+    btn.classList.add('has-filters');
+  } else {
+    badge.style.display = 'none';
+    btn.classList.remove('has-filters');
+  }
+}
+
+document.getElementById('filterBtn').addEventListener('click', () => {
+  document.getElementById('filterOverlay').classList.add('show');
+});
+document.getElementById('filterOverlay').addEventListener('click', (e) => {
+  if(e.target.id === 'filterOverlay') document.getElementById('filterOverlay').classList.remove('show');
+});
+document.getElementById('applyFiltersBtn').addEventListener('click', () => {
+  document.getElementById('filterOverlay').classList.remove('show');
+  render();
+});
+document.getElementById('clearFiltersBtn').addEventListener('click', () => {
+  state.segments = []; state.urgencies = []; state.treatments = []; state.professionals = []; state.genders = [];
+  document.querySelectorAll('.filter-option.selected').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('.chip.active').forEach(b => b.classList.remove('active'));
+  updateFilterBadge();
+  render();
+});
+document.getElementById('treatmentSearchMini').addEventListener('input', (e) => {
+  const term = e.target.value.toLowerCase();
+  const filtered = allTreatmentCats.filter(c => c.toLowerCase().includes(term));
+  renderTreatmentOptions(filtered);
+});
+
+// ============================================================
+// FILTERING & SORTING
+// ============================================================
+function getFiltered(){
+  let rows = DATA;
+
+  // Nav filter (bottom nav)
+  switch(state.navFilter){
+    case 'urgentes':
+      rows = rows.filter(p => p.urgencia === 'ATRASADO - Contactar ya' || p.urgencia === 'Proximo (0-14 dias)');
+      break;
+    case 'vip':
+      rows = rows.filter(p => p.segmento === 'VIP Activo' || p.segmento === 'VIP en Riesgo (Reactivar)');
+      break;
+    case 'membresia':
+      rows = rows.filter(p => p.candidatoMembresia && p.candidatoMembresia.startsWith('Si'));
+      break;
+    case 'alertas':
+      rows = rows.filter(p => p.tieneAlertaMedica);
+      break;
+    case 'ortodoncia':
+      rows = rows.filter(p => p.ortodonciaEstado === 'Activa');
+      break;
+  }
+
+  if(state.search){
+    const t = state.search.toLowerCase();
+    rows = rows.filter(p => p.nombre.toLowerCase().includes(t) || (p.rut && p.rut.includes(t)));
+  }
+  if(state.segments.length){
+    rows = rows.filter(p => state.segments.includes(p.segmento));
+  }
+  if(state.urgencies.length){
+    rows = rows.filter(p => state.urgencies.includes(p.urgencia));
+  }
+  if(state.treatments.length){
+    rows = rows.filter(p => state.treatments.every(t => p.categorias.includes(t)));
+  }
+  if(state.professionals.length){
+    rows = rows.filter(p => state.professionals.includes(p.profesionalPrincipal));
+  }
+  if(state.genders.length){
+    rows = rows.filter(p => state.genders.includes(p.genero));
+  }
+  return rows;
+}
+
+function sortRows(rows){
+  const r = [...rows];
+  switch(state.sort){
+    case 'gasto_desc': r.sort((a,b) => b.gastoTotal - a.gastoTotal); break;
+    case 'urgencia': r.sort((a,b) => (URGENCY_ORDER[a.urgencia]??9) - (URGENCY_ORDER[b.urgencia]??9) || (a.recallDias??9999) - (b.recallDias??9999)); break;
+    case 'reciente': r.sort((a,b) => new Date(b.ultimaVisita) - new Date(a.ultimaVisita)); break;
+    case 'nombre': r.sort((a,b) => a.nombre.localeCompare(b.nombre)); break;
+  }
+  return r;
+}
+
+// ============================================================
+// RENDER PATIENT LIST
+// ============================================================
+const MAX_RENDER = 300;
+
+function render(){
+  const filtered = sortRows(getFiltered());
+  const info = document.getElementById('resultsCount');
+  info.textContent = `${filtered.length.toLocaleString('es-CL')} pacientes` +
+    (filtered.length > MAX_RENDER ? ` (mostrando primeros ${MAX_RENDER} — refina la búsqueda)` : '');
+
+  const list = document.getElementById('patientList');
+  const emptyState = document.getElementById('emptyState');
+
+  if(filtered.length === 0){
+    list.innerHTML = '';
+    emptyState.style.display = 'block';
+    return;
+  }
+  emptyState.style.display = 'none';
+
+  const rows = filtered.slice(0, MAX_RENDER);
+  list.innerHTML = rows.map(p => {
+    const idx = DATA.indexOf(p);
+    const badgeClass = SEGMENT_BADGE[p.segmento] || 'badge-regular';
+    const dotClass = URGENCY_DOT[p.urgencia] || 'dot-none';
+    let cardClass = '';
+    if(p.urgencia === 'ATRASADO - Contactar ya') cardClass = 'urgent-now';
+    else if(p.urgencia === 'Proximo (0-14 dias)') cardClass = 'urgent-soon';
+    else if(p.segmento === 'VIP Activo') cardClass = 'vip';
+
+    const esCitaConfirmadaList = (p.recallFuente || '').toLowerCase().includes('confirmada');
+    const nextLabel = p.recallCategoria ?
+      `${esCitaConfirmadaList ? '📅 ' : ''}${p.recallCategoria}${p.recallFecha ? ' · ' + fmtDate(p.recallFecha) : ''}` : 'Sin recordatorio';
+
+    const orthoTag = p.ortodonciaEstado === 'Activa' ? '<span class="badge badge-ortho-active">🦷 Ortodoncia activa</span>' : '';
+    const citaTag = esCitaConfirmadaList ? '<span class="badge badge-cita-confirmada">📅 Cita agendada</span>' : '';
+    const alertIcon = p.tieneAlertaMedica ? '<span class="alert-icon">⚕️</span>' : '';
+
+    return `<div class="patient-card ${cardClass}" data-idx="${idx}">
+      <div class="pc-top">
+        <div class="pc-name">${alertIcon}${escapeHtml(p.nombre)}</div>
+        <div class="pc-spend">${money(p.gastoTotal)}</div>
+      </div>
+      <div class="pc-meta">
+        <span class="badge ${badgeClass}">${p.segmento}</span>
+        ${citaTag}
+        ${orthoTag}
+      </div>
+      <div class="pc-next">
+        <span class="urgency-dot ${dotClass}"></span>${escapeHtml(nextLabel)}
+      </div>
+    </div>`;
+  }).join('');
+
+  list.querySelectorAll('.patient-card').forEach(card => {
+    card.addEventListener('click', () => openProfile(DATA[parseInt(card.dataset.idx)]));
+  });
+}
+
+// ============================================================
+// PATIENT PROFILE MODAL
+// ============================================================
+function openProfile(p){
+  const overlay = document.getElementById('profileOverlay');
+  const sheet = document.getElementById('profileSheet');
+  const badgeClass = SEGMENT_BADGE[p.segmento] || 'badge-regular';
+
+  const esCitaConfirmada = (p.recallFuente || '').toLowerCase().includes('confirmada');
+
+  let confirmedAppointmentHtml = '';
+  let dueBoxClass = '';
+  let dueText = 'Sin próximo recordatorio calculable';
+  let dueSub = '';
+
+  if(esCitaConfirmada && p.recallCategoria){
+    // Real, already-booked appointment in Reservo — show this prominently and separately
+    const diasTxt = p.recallDias != null ? (p.recallDias === 0 ? 'Hoy' : p.recallDias < 0 ? `hace ${Math.abs(p.recallDias)} días (revisar, ya pasó)` : `en ${p.recallDias} días`) : '';
+    confirmedAppointmentHtml = `
+      <div class="confirmed-appt-box">
+        <div class="label">📅 Próxima cita YA AGENDADA</div>
+        <div class="main">${fmtDate(p.recallFecha)} ${diasTxt ? '· ' + diasTxt : ''}</div>
+        <div class="sub">${escapeHtml(p.recallCategoria)}</div>
+      </div>`;
+  } else if(p.recallCategoria){
+    if(p.urgencia === 'ATRASADO - Contactar ya') dueBoxClass = 'urgent';
+    else if(p.urgencia === 'Proximo (0-14 dias)') dueBoxClass = 'soon';
+    else if(p.urgencia && p.urgencia.startsWith('Inactivo')) dueBoxClass = 'stale';
+
+    if(p.recallDias != null && p.recallDias < 0){
+      dueText = `${p.recallCategoria} — vencido hace ${Math.abs(p.recallDias)} días`;
+    } else if(p.recallDias != null){
+      dueText = `${p.recallCategoria} — en ${p.recallDias} días`;
+    } else {
+      dueText = p.recallCategoria;
+    }
+    dueSub = `Estimado · ${p.recallFecha ? 'Fecha estimada: ' + fmtDate(p.recallFecha) : ''} ${p.recallDetalle ? '· ' + p.recallDetalle : ''}`;
+  }
+
+  // Medical alert box
+  let medicalAlertHtml = '';
+  const hasFichaMedica = p.alertasMedicas && Object.keys(p.alertasMedicas).length > 0;
+  const hasAnamnesis = p.anamnesisResumida && p.anamnesisResumida.length > 0;
+  if(hasFichaMedica || hasAnamnesis){
+    let items = '';
+    if(hasFichaMedica){
+      const fieldLabels = {MOTIVO_CONSULTA:'Motivo consulta', PRECAUCION:'Precaución', ALERGIAS_OTRAS:'Alergias',
+        MEDICAMENTOS:'Medicamentos', HABITOS:'Hábitos', ENFERMEDAD_ACTUAL:'Enfermedad actual'};
+      for(const [k,v] of Object.entries(p.alertasMedicas)){
+        items += `<div class="medical-alert-item"><b>${fieldLabels[k]||k}:</b> ${escapeHtml(v)}</div>`;
+      }
+    }
+    if(hasAnamnesis){
+      p.anamnesisResumida.forEach(a => {
+        items += `<div class="medical-alert-item">📋 ${escapeHtml(a)}</div>`;
+      });
+    }
+    medicalAlertHtml = `<div class="medical-alert-box">
+      <div class="title">⚕️ Información médica relevante</div>
+      ${items}
+    </div>`;
+  }
+
+  const waLink = p.telefono ?
+    `<a class="action-btn btn-whatsapp" href="https://wa.me/${p.telefono.replace(/\D/g,'')}" target="_blank">📱 WhatsApp</a>` :
+    `<span class="action-btn btn-disabled">📱 Sin teléfono</span>`;
+  const emailLink = p.email ?
+    `<a class="action-btn btn-email" href="mailto:${p.email}">✉️ Email</a>` :
+    `<span class="action-btn btn-disabled">✉️ Sin email</span>`;
+  const editBtn = isAdmin ? `<button class="action-btn btn-edit" id="openEditFormBtn">✏️ Editar</button>` : '';
+
+  const editedTag = p._editado ? '<span class="profile-badge" style="background:rgba(255,255,255,0.3)">✏️ Editado manualmente</span>' : '';
+
+  const orthoTag = p.ortodonciaEstado === 'Activa' ? '<span class="profile-badge" style="background:rgba(255,180,90,0.35)">🦷 Ortodoncia ACTIVA</span>' :
+    (p.ortodonciaEstado === 'Historica/Finalizada' ? '<span class="profile-badge">🦷 Ortodoncia finalizada</span>' : '');
+
+  const catsHtml = p.categorias.map(c => `<span class="tag">${escapeHtml(c)}</span>`).join('');
+
+  const productsHtml = (p.productosUsados && p.productosUsados.length) ?
+    `<div class="section-block">
+      <div class="section-title">🧪 Productos / marcas mencionados</div>
+      <div class="products-box">${p.productosUsados.join(' · ')}</div>
+    </div>` : '';
+
+  const recentTreatmentsHtml = (p.resumenTratamientosRecientes && p.resumenTratamientosRecientes.length) ?
+    `<div class="section-block">
+      <div class="section-title">📋 Procedimientos clínicos recientes</div>
+      ${p.resumenTratamientosRecientes.map(t => `<div class="history-item">${escapeHtml(t)}</div>`).join('')}
+    </div>` : '';
+
+  const paymentHistoryHtml = p.historialPagos ?
+    `<div class="section-block">
+      <div class="section-title">💰 Historial de pagos</div>
+      ${p.historialPagos.split(' | ').map(h => `<div class="history-item">${escapeHtml(h)}</div>`).join('')}
+    </div>` : '';
+
+  sheet.innerHTML = `
+    <div class="profile-header">
+      <div class="profile-header-top">
+        <div>
+          <div class="profile-name">${escapeHtml(p.nombre)}</div>
+          <div class="profile-badges">
+            <span class="profile-badge">${p.segmento}</span>
+            ${orthoTag}
+            ${editedTag}
+          </div>
+        </div>
+        <button class="profile-close-btn" id="closeProfileBtn">✕</button>
+      </div>
+    </div>
+    <div class="profile-body">
+
+      ${medicalAlertHtml}
+
+      ${confirmedAppointmentHtml}
+
+      ${(!esCitaConfirmada && p.recallCategoria) ? `
+      <div class="next-due-card ${dueBoxClass}">
+        <div class="label">Próximo recordatorio (estimado)</div>
+        <div class="main">${escapeHtml(dueText)}</div>
+        <div class="sub">${escapeHtml(dueSub)}</div>
+      </div>` : (!esCitaConfirmada ? `
+      <div class="next-due-card">
+        <div class="label">Próximo recordatorio</div>
+        <div class="main">${escapeHtml(dueText)}</div>
+      </div>` : '')}
+
+      <div class="info-grid">
+        <div class="info-item"><div class="label">Teléfono</div><div class="value">${p.telefono || '—'}</div></div>
+        <div class="info-item"><div class="label">Email</div><div class="value" style="font-size:0.78rem;">${p.email || '—'}</div></div>
+        <div class="info-item"><div class="label">RUT</div><div class="value">${p.rut || '—'}</div></div>
+        <div class="info-item"><div class="label">Profesional principal</div><div class="value" style="font-size:0.82rem;">${p.profesionalPrincipal}</div></div>
+        <div class="info-item"><div class="label">Primera visita</div><div class="value">${fmtDate(p.primeraVisita)}</div></div>
+        <div class="info-item"><div class="label">Última visita</div><div class="value">${fmtDate(p.ultimaVisita)}</div></div>
+        <div class="info-item"><div class="label">N° visitas</div><div class="value">${p.numVisitas}</div></div>
+        <div class="info-item"><div class="label">Gasto total</div><div class="value">${money(p.gastoTotal)}</div></div>
+      </div>
+
+      <div class="actions-row">${waLink}${emailLink}${editBtn}</div>
+
+      ${p.notaManual ? `<div class="section-block"><div class="section-title">📝 Nota manual</div><div class="history-item">${escapeHtml(p.notaManual)}</div></div>` : ''}
+
+      <div class="section-block">
+        <div class="section-title">🏷️ Categorías de tratamiento</div>
+        <div class="tag-list">${catsHtml}</div>
+      </div>
+
+      ${productsHtml}
+      ${recentTreatmentsHtml}
+      ${paymentHistoryHtml}
+
+    </div>
+  `;
+
+  document.getElementById('closeProfileBtn').addEventListener('click', closeProfile);
+  const editBtnEl = document.getElementById('openEditFormBtn');
+  if(editBtnEl) editBtnEl.addEventListener('click', () => openEditForm(p));
+  overlay.classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+
+function openEditForm(p){
+  pendingEditId = p.id;
+  const formOverlay = document.getElementById('editFormOverlay');
+  const formBody = document.getElementById('editFormBody');
+
+  const allProfs = getAllProfessionals();
+  const segmentList = ['VIP Activo','VIP en Riesgo (Reactivar)','Frecuente Activo','Frecuente en Riesgo',
+    'Regular Activo','Nuevo (1ra visita reciente)','Visita Unica - No volvio','Inactivo / Perdido'];
+
+  formBody.innerHTML = `
+    <div class="edit-field">
+      <label>Nombre</label>
+      <input type="text" id="editNombre" value="${escapeHtml(p.nombre)}" placeholder="Nombre completo">
+    </div>
+    <div class="edit-field">
+      <label>RUT</label>
+      <input type="text" id="editRut" value="${escapeHtml(p.rut || '')}" placeholder="12345678-9">
+    </div>
+    <div class="edit-field">
+      <label>Teléfono</label>
+      <input type="text" id="editTelefono" value="${escapeHtml(p.telefono || '')}" placeholder="+56 9 1234 5678">
+    </div>
+    <div class="edit-field">
+      <label>Email</label>
+      <input type="email" id="editEmail" value="${escapeHtml(p.email || '')}" placeholder="paciente@correo.com">
+    </div>
+    <div class="edit-field">
+      <label>Profesional principal</label>
+      <select id="editProfesional">
+        <option value="">— Sin asignar —</option>
+        ${allProfs.map(pr => `<option value="${escapeHtml(pr)}" ${pr===p.profesionalPrincipal?'selected':''}>${escapeHtml(pr)}</option>`).join('')}
+      </select>
+    </div>
+    <div class="edit-field">
+      <label>Segmento</label>
+      <select id="editSegmento">
+        ${segmentList.map(s => `<option value="${escapeHtml(s)}" ${s===p.segmento?'selected':''}>${escapeHtml(s)}</option>`).join('')}
+      </select>
+      <div class="edit-hint">Cambiar esto anula el cálculo automático para este paciente.</div>
+    </div>
+    <div class="edit-field">
+      <label>Nota manual (visible en su ficha)</label>
+      <textarea id="editNota" rows="3" placeholder="Ej: prefiere contacto por WhatsApp después de las 18:00">${escapeHtml(p.notaManual || '')}</textarea>
+    </div>
+    <div id="editSaveStatus" class="edit-save-status"></div>
+  `;
+
+  formOverlay.classList.add('show');
+}
+
+function closeEditForm(){
+  document.getElementById('editFormOverlay').classList.remove('show');
+  pendingEditId = null;
+}
+
+document.getElementById('closeEditFormBtn').addEventListener('click', closeEditForm);
+document.getElementById('editFormOverlay').addEventListener('click', (e) => {
+  if(e.target.id === 'editFormOverlay') closeEditForm();
+});
+
+document.getElementById('saveEditBtn').addEventListener('click', async () => {
+  if(!pendingEditId) return;
+  const telefono = document.getElementById('editTelefono').value.trim();
+  const email = document.getElementById('editEmail').value.trim();
+  const nota = document.getElementById('editNota').value.trim();
+  const nombre = document.getElementById('editNombre').value.trim();
+  const rut = document.getElementById('editRut').value.trim();
+  const profesionalPrincipal = document.getElementById('editProfesional').value;
+  const segmento = document.getElementById('editSegmento').value;
+  const statusEl = document.getElementById('editSaveStatus');
+
+  statusEl.textContent = 'Guardando...';
+  statusEl.className = 'edit-save-status saving';
+
+  const ok = await saveEdit(pendingEditId, {
+    telefono: telefono || null,
+    email: email || null,
+    notaManual: nota || null,
+    nombre: nombre || null,
+    rut: rut || null,
+    profesionalPrincipal: profesionalPrincipal || null,
+    segmento: segmento || null,
+  });
+
+  if(ok){
+    statusEl.textContent = '✓ Guardado correctamente';
+    statusEl.className = 'edit-save-status success';
+    setTimeout(() => {
+      closeEditForm();
+      const p = DATA.find(x => x.id === pendingEditId);
+      if(p) openProfile(p); // refresh profile view with new data
+      render(); // refresh list (phone icon may have changed)
+    }, 600);
+  } else {
+    statusEl.textContent = '✗ Error al guardar. Intenta de nuevo.';
+    statusEl.className = 'edit-save-status error';
+  }
+});
+
+function closeProfile(){
+  document.getElementById('profileOverlay').classList.remove('show');
+  document.body.style.overflow = '';
+}
+document.getElementById('profileOverlay').addEventListener('click', (e) => {
+  if(e.target.id === 'profileOverlay') closeProfile();
+});
+
+// ============================================================
+// SEARCH INPUT
+// ============================================================
+document.getElementById('searchInput').addEventListener('input', (e) => {
+  state.search = e.target.value;
+  render();
+});
+
+// ============================================================
+// ANALYTICS VIEW
+// ============================================================
+function renderAnalytics(){
+  const container = document.getElementById('analyticsView');
+
+  const total = DATA.length;
+  const totalGasto = DATA.reduce((s,p)=>s+p.gastoTotal,0);
+  const avgTicket = DATA.reduce((s,p)=>s+p.ticketPromedio,0)/total;
+  const conAlerta = DATA.filter(p=>p.tieneAlertaMedica).length;
+
+  // Category distribution
+  const catCounts = {};
+  DATA.forEach(p => p.categorias.forEach(c => { catCounts[c] = (catCounts[c]||0)+1; }));
+  const topCats = Object.entries(catCounts).sort((a,b)=>b[1]-a[1]).slice(0,12);
+  const maxCatCount = topCats.length ? topCats[0][1] : 1;
+
+  const catColors = ['#3F6B4C','#73A082','#C3DCC5','#D98A3D','#4D7AA8','#CFA23B','#C25450','#8a6fb0'];
+
+  // Segment distribution
+  const segCounts = {};
+  DATA.forEach(p => { segCounts[p.segmento] = (segCounts[p.segmento]||0)+1; });
+  const segEntries = SEGMENT_ORDER.map(s => [s, segCounts[s]||0]);
+  const maxSegCount = Math.max(...segEntries.map(e=>e[1]), 1);
+
+  // Urgency distribution
+  const urgCounts = {};
+  DATA.forEach(p => { urgCounts[p.urgencia] = (urgCounts[p.urgencia]||0)+1; });
+
+  container.innerHTML = `
+    <div class="stat-card-grid">
+      <div class="stat-card"><div class="num">${total.toLocaleString('es-CL')}</div><div class="lbl">Pacientes totales</div></div>
+      <div class="stat-card"><div class="num">$${(totalGasto/1e6).toFixed(0)}M</div><div class="lbl">Gasto histórico total</div></div>
+      <div class="stat-card"><div class="num">$${Math.round(avgTicket).toLocaleString('es-CL')}</div><div class="lbl">Ticket promedio</div></div>
+      <div class="stat-card"><div class="num">${conAlerta}</div><div class="lbl">Con alerta médica</div></div>
+    </div>
+
+    <div class="analytics-section">
+      <div class="analytics-title">Pacientes por categoría de tratamiento</div>
+      <div class="bar-chart">
+        ${topCats.map(([cat,count],i) => `
+          <div class="bar-row">
+            <div class="bar-label">${escapeHtml(cat)}</div>
+            <div class="bar-track">
+              <div class="bar-fill" style="width:${(count/maxCatCount*100)}%; background:${catColors[i%catColors.length]};">
+                <span class="bar-value">${count}</span>
+              </div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+
+    <div class="analytics-section">
+      <div class="analytics-title">Distribución por segmento</div>
+      <div class="bar-chart">
+        ${segEntries.map(([seg,count]) => `
+          <div class="bar-row">
+            <div class="bar-label">${escapeHtml(seg)}</div>
+            <div class="bar-track">
+              <div class="bar-fill" style="width:${(count/maxSegCount*100)}%; background:var(--green-dark);">
+                <span class="bar-value">${count}</span>
+              </div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+
+    <div class="analytics-section">
+      <div class="analytics-title">Urgencia de contacto</div>
+      <div class="bar-chart">
+        ${Object.entries(urgCounts).sort((a,b)=>(URGENCY_ORDER[a[0]]??9)-(URGENCY_ORDER[b[0]]??9)).map(([urg,count]) => {
+          const dotClass = URGENCY_DOT[urg]||'dot-none';
+          const colorMap = {'dot-now':'#C25450','dot-soon':'#CFA23B','dot-month':'#73A082','dot-stale-mid':'#D98A3D','dot-stale-long':'#8C8C84','dot-far':'#CCC','dot-none':'#EEE'};
+          return `
+          <div class="bar-row">
+            <div class="bar-label">${escapeHtml(urg)}</div>
+            <div class="bar-track">
+              <div class="bar-fill" style="width:${(count/total*100)}%; background:${colorMap[dotClass]};">
+                <span class="bar-value">${count}</span>
+              </div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+
+    <div class="analytics-section">
+      <div class="analytics-title">⭐ Pacientes VIP — distribución por género</div>
+      <div class="bar-chart">
+        ${(() => {
+          const vips = DATA.filter(p => p.segmento === 'VIP Activo' || p.segmento === 'VIP en Riesgo (Reactivar)');
+          const genderCounts = {};
+          vips.forEach(p => { genderCounts[p.genero||'No determinado'] = (genderCounts[p.genero||'No determinado']||0)+1; });
+          const maxG = Math.max(...Object.values(genderCounts), 1);
+          const genderColors = {'Femenino':'#C25450','Masculino':'#4D7AA8','No determinado':'#8C8C84'};
+          return Object.entries(genderCounts).sort((a,b)=>b[1]-a[1]).map(([g,c]) => `
+            <div class="bar-row">
+              <div class="bar-label">${escapeHtml(g)}</div>
+              <div class="bar-track">
+                <div class="bar-fill" style="width:${(c/maxG*100)}%; background:${genderColors[g]||'#999'};">
+                  <span class="bar-value">${c}</span>
+                </div>
+              </div>
+            </div>
+          `).join('');
+        })()}
+      </div>
+    </div>
+
+    <div class="analytics-section">
+      <div class="analytics-title">⭐ Top 10 pacientes VIP por gasto</div>
+      <div class="bar-chart">
+        ${(() => {
+          const vips = [...DATA].filter(p => p.segmento === 'VIP Activo' || p.segmento === 'VIP en Riesgo (Reactivar)')
+            .sort((a,b) => b.gastoTotal - a.gastoTotal).slice(0, 10);
+          const maxSpend = vips.length ? vips[0].gastoTotal : 1;
+          return vips.map(p => `
+            <div class="bar-row">
+              <div class="bar-label">${escapeHtml(p.nombre)}</div>
+              <div class="bar-track">
+                <div class="bar-fill" style="width:${(p.gastoTotal/maxSpend*100)}%; background:var(--green-dark);">
+                  <span class="bar-value">$${(p.gastoTotal/1e6).toFixed(1)}M</span>
+                </div>
+              </div>
+            </div>
+          `).join('');
+        })()}
+      </div>
+    </div>
+
+    <div class="analytics-section">
+      <div class="analytics-title">Pacientes por género (toda la base)</div>
+      <div class="bar-chart">
+        ${(() => {
+          const genderCounts = {};
+          DATA.forEach(p => { genderCounts[p.genero||'No determinado'] = (genderCounts[p.genero||'No determinado']||0)+1; });
+          const maxG = Math.max(...Object.values(genderCounts), 1);
+          const genderColors = {'Femenino':'#C25450','Masculino':'#4D7AA8','No determinado':'#8C8C84'};
+          return Object.entries(genderCounts).sort((a,b)=>b[1]-a[1]).map(([g,c]) => `
+            <div class="bar-row">
+              <div class="bar-label">${escapeHtml(g)}</div>
+              <div class="bar-track">
+                <div class="bar-fill" style="width:${(c/maxG*100)}%; background:${genderColors[g]||'#999'};">
+                  <span class="bar-value">${c}</span>
+                </div>
+              </div>
+            </div>
+          `).join('');
+        })()}
+      </div>
+    </div>
+  `;
+}
+
+// ============================================================
+// GANTT VIEW: Carta de contacto y seguimiento
+// ============================================================
+function renderGantt(){
+  const container = document.getElementById('ganttView');
+
+  const withRecall = DATA.filter(p => p.recallDias != null);
+
+  if(withRecall.length === 0){
+    container.innerHTML = '<div class="empty-state"><div class="icon">📅</div>Sin datos de seguimiento disponibles.</div>';
+    return;
+  }
+
+  const URGENCY_COLOR = {
+    'ATRASADO - Contactar ya': '#C25450',
+    'Proximo (0-14 dias)': '#CFA23B',
+    'Proximo mes': '#73A082',
+    'Atrasado (3-12 meses vencido)': '#D98A3D',
+    'Mas adelante': '#A9BDB3',
+    'Inactivo largo plazo (+1 año vencido)': '#6B6B66',
+  };
+  function barColorFor(p){
+    return URGENCY_COLOR[p.urgencia] || '#A9BDB3';
+  }
+
+  // Group into urgency buckets using the same precise urgencia field used elsewhere in the app.
+  // Order here = display order: most actionable/urgent first, long-inactive last (separate from "act now").
+  const buckets = [
+    { key:'atrasado', label:'🔴 Atrasados recientes — contactar primero', items: [] },
+    { key:'pronto', label:'🟡 Próximos 14 días', items: [] },
+    { key:'mes', label:'🟢 Próximo mes', items: [] },
+    { key:'moderado', label:'🟠 Atrasados 3-12 meses', items: [] },
+    { key:'lejos', label:'⚪ Más adelante', items: [] },
+    { key:'inactivo', label:'⚫ Inactivos +1 año — campaña de reactivación', items: [] },
+  ];
+  withRecall.forEach(p => {
+    switch(p.urgencia){
+      case 'ATRASADO - Contactar ya': buckets[0].items.push(p); break;
+      case 'Proximo (0-14 dias)': buckets[1].items.push(p); break;
+      case 'Proximo mes': buckets[2].items.push(p); break;
+      case 'Atrasado (3-12 meses vencido)': buckets[3].items.push(p); break;
+      case 'Mas adelante': buckets[4].items.push(p); break;
+      case 'Inactivo largo plazo (+1 año vencido)': buckets[5].items.push(p); break;
+      default: buckets[4].items.push(p);
+    }
+  });
+  buckets.forEach(b => b.items.sort((a,b2) => a.recallDias - b2.recallDias));
+
+  const ganttSearch = (state.ganttSearch || '').toLowerCase();
+  const filteredBuckets = buckets.map(b => ({
+    ...b,
+    items: ganttSearch ? b.items.filter(p => p.nombre.toLowerCase().includes(ganttSearch)) : b.items
+  }));
+
+  const minDias = Math.max(withRecall.reduce((m,p) => Math.min(m, p.recallDias), 0), -180);
+  const maxDias = Math.min(withRecall.reduce((m,p) => Math.max(m, p.recallDias), 0), 90);
+  const range = Math.max(maxDias - minDias, 1);
+  const todayPos = ((0 - minDias) / range) * 100;
+
+  function dateLabelFor(dias){
+    const d = new Date();
+    d.setDate(d.getDate() + dias);
+    return d.toLocaleDateString('es-CL', {day:'2-digit', month:'short'});
+  }
+
+  function renderRow(p){
+    const dias = p.recallDias;
+    const rawPos = ((dias - minDias) / range) * 100;
+    const pos = Math.max(0, Math.min(100, rawPos)); // clamp: never let a bar escape its track
+    const color = barColorFor(p);
+    const label = dias < 0 ? `Atrasado ${Math.abs(dias)}d` : (dias === 0 ? 'Hoy' : `En ${dias}d`);
+    const waLink = p.telefono ? `https://wa.me/${p.telefono.replace(/\D/g,'')}` : null;
+    const barLeft = Math.min(pos, todayPos);
+    const barWidth = Math.max(Math.abs(pos - todayPos), 0.5);
+    return `
+      <div class="gantt-row" data-id="${escapeHtml(p.id)}">
+        <div class="gantt-name">
+          ${p.tieneAlertaMedica ? '<span class="alert-icon">⚕️</span>' : ''}${escapeHtml(p.nombre)}
+          <span class="gantt-cat">${escapeHtml(p.recallCategoria || '')}</span>
+        </div>
+        <div class="gantt-track">
+          <div class="gantt-today-line" style="left:${todayPos}%"></div>
+          <div class="gantt-bar" style="left:${barLeft}%; width:${barWidth}%; background:${color};" title="${label}"></div>
+          <div class="gantt-marker" style="left:${pos}%; background:${color};"></div>
+        </div>
+        <div class="gantt-actions">
+          <span class="gantt-days" style="color:${color};">${label}</span>
+          ${p.telefono ? `<span class="gantt-phone">${escapeHtml(p.telefono)}</span>` : ''}
+          ${waLink ? `<a href="${waLink}" target="_blank" class="gantt-wa-btn">📱</a>` : '<span class="gantt-wa-btn disabled">—</span>'}
+        </div>
+      </div>
+    `;
+  }
+
+  const totalShown = filteredBuckets.reduce((s,b) => s + b.items.length, 0);
+
+  container.innerHTML = `
+    <div class="analytics-section">
+      <div class="analytics-title">📅 Carta Gantt — Orden de contacto y seguimiento</div>
+
+      <div class="stat-card-grid" style="margin-bottom:14px;">
+        <div class="stat-card"><div class="num" style="color:#C25450;">${buckets[0].items.length}</div><div class="lbl">Atrasados recientes</div></div>
+        <div class="stat-card"><div class="num" style="color:#CFA23B;">${buckets[1].items.length}</div><div class="lbl">Próx. 14 días</div></div>
+        <div class="stat-card"><div class="num" style="color:#73A082;">${buckets[2].items.length}</div><div class="lbl">Próx. mes</div></div>
+        <div class="stat-card"><div class="num" style="color:#D98A3D;">${buckets[3].items.length}</div><div class="lbl">Atrasados 3-12m</div></div>
+      </div>
+      <div style="font-size:0.72rem; color:var(--text-on-bg-soft); margin-bottom:12px;">
+        + ${buckets[4].items.length} más adelante · ${buckets[5].items.length} inactivos hace más de un año (ver bloque al final, candidatos a campaña de reactivación, no a llamada urgente)
+      </div>
+
+      <input type="text" id="ganttSearchInput" class="search-input" style="margin-bottom:12px; width:100%;"
+        placeholder="🔍 Buscar paciente dentro de esta lista..." value="${escapeHtml(state.ganttSearch||'')}">
+
+      <div class="gantt-axis">
+        <span>${dateLabelFor(minDias)}</span>
+        <span class="gantt-axis-today">Hoy (${dateLabelFor(0)})</span>
+        <span>${dateLabelFor(maxDias)}</span>
+      </div>
+
+      ${totalShown === 0 ? '<div class="empty-state" style="padding:30px;">Sin coincidencias.</div>' :
+        filteredBuckets.map(b => b.items.length === 0 ? '' : `
+          <div class="gantt-bucket">
+            <div class="gantt-bucket-title">${b.label} <span class="gantt-bucket-count">(${b.items.length})</span></div>
+            <div class="gantt-wrap">
+              ${b.items.slice(0, 80).map(renderRow).join('')}
+              ${b.items.length > 80 ? `<div class="gantt-more">+ ${b.items.length - 80} más — refina la búsqueda para verlos</div>` : ''}
+            </div>
+          </div>
+        `).join('')
+      }
+    </div>
+  `;
+
+  document.getElementById('ganttSearchInput').addEventListener('input', (e) => {
+    state.ganttSearch = e.target.value;
+    renderGantt();
+    // restore focus + cursor position after re-render
+    const input = document.getElementById('ganttSearchInput');
+    input.focus();
+    input.setSelectionRange(input.value.length, input.value.length);
+  });
+
+  container.querySelectorAll('.gantt-row').forEach(row => {
+    row.addEventListener('click', (e) => {
+      if(e.target.closest('.gantt-wa-btn')) return;
+      const p = DATA.find(x => x.id === row.dataset.id);
+      if(p) openProfile(p);
+    });
+  });
+}
+
+// ============================================================
+// INIT (called after successful login, once DATA is loaded)
+// ============================================================
+function initApp(){
+  buildKPIs();
+  buildQuickChips();
+  buildFilterPanel();
+  render();
+}
+
+</script>
+
+</body>
+</html>
