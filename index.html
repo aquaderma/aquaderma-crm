@@ -82,7 +82,7 @@
   }
   .view-toggle-big{
     display:grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     gap:8px;
     margin-top:14px;
   }
@@ -316,35 +316,6 @@
     color:var(--ink-soft);
   }
   .empty-state .icon{ font-size:2.5rem; margin-bottom:10px; }
-
-  /* ============ BOTTOM NAV (mobile) ============ */
-  .bottom-nav{
-    position:fixed;
-    bottom:0; left:0; right:0;
-    background:var(--white);
-    border-top:1px solid var(--bg-main);
-    display:flex;
-    justify-content:space-around;
-    padding: 8px 0 max(8px, env(safe-area-inset-bottom));
-    box-shadow: 0 -4px 16px rgba(0,0,0,0.06);
-    max-width:1280px;
-    margin:0 auto;
-    z-index:40;
-  }
-  .nav-item{
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    gap:2px;
-    background:none;
-    border:none;
-    color:var(--ink-soft);
-    font-size:0.65rem;
-    padding:4px 14px;
-    cursor:pointer;
-  }
-  .nav-item .nav-icon{ font-size:1.25rem; }
-  .nav-item.active{ color:var(--primary); font-weight:700; }
 
   /* ============ FILTER PANEL (overlay) ============ */
   .filter-overlay{
@@ -637,10 +608,24 @@
     font-size:1rem; cursor:pointer; flex-shrink:0; font-weight:700;
   }
   .cc-reject-btn.active{ background:var(--red); color:white; border-color:var(--red); }
+  .cc-noresp-btn{
+    background:var(--surface-alt); color:var(--ink-soft); border:1.5px solid var(--border);
+    border-radius:10px; width:34px; height:34px; display:flex; align-items:center; justify-content:center;
+    font-size:1rem; cursor:pointer; flex-shrink:0;
+  }
+  .cc-noresp-btn.active{ background:var(--orange); color:white; border-color:var(--orange); }
   .contact-card.lost{ opacity:0.6; }
 
+  .gantt-noresp-btn, .gantt-reject-btn{
+    background:var(--surface-alt); color:var(--ink-soft); border:1.5px solid var(--border);
+    border-radius:8px; width:30px; height:30px; display:flex; align-items:center; justify-content:center;
+    font-size:0.9rem; cursor:pointer; flex-shrink:0;
+  }
+  .gantt-noresp-btn.active{ background:var(--orange); color:white; border-color:var(--orange); }
+  .gantt-reject-btn.active{ background:var(--red); color:white; border-color:var(--red); }
+
   .contact-subtabs{
-    display:grid; grid-template-columns:repeat(4,1fr); gap:7px;
+    display:grid; grid-template-columns:repeat(5,1fr); gap:6px;
     margin-bottom:14px;
   }
   .cst-btn{
@@ -653,15 +638,6 @@
   }
   .cst-btn.active{ background:var(--primary); color:white; border-color:var(--primary); }
   .cst-btn.active span{ color:white; }
-  .contact-mode-bar{
-    display:flex; gap:8px; margin-bottom:14px;
-  }
-  .cmb-btn{
-    flex:1; background:var(--surface); border:1.5px solid var(--border);
-    border-radius:10px; padding:9px; font-size:0.8rem; font-weight:700;
-    color:var(--ink-soft); cursor:pointer; text-align:center;
-  }
-  .cmb-btn.active{ background:var(--primary-light); color:white; border-color:var(--primary-light); }
   .cc-tracked-info{
     margin-top:8px; font-size:0.74rem; color:var(--primary);
     background:var(--primary-pale); padding:6px 10px; border-radius:8px;
@@ -773,7 +749,7 @@
   }
   .gantt-bar{
     position:absolute; top:0; bottom:0;
-    border-radius:6px; opacity:0.35;
+    border-radius:6px; opacity:0.85;
   }
   .gantt-marker{
     position:absolute; top:-2px;
@@ -902,6 +878,7 @@
     </div>
     <div class="view-toggle-big" id="viewToggle">
       <button data-view="lista" class="active">👥<span>Lista</span></button>
+      <button data-view="ganttfull">📊<span>Carta Gantt</span></button>
       <button data-view="analytics">📈<span>Análisis</span></button>
       <button data-view="gantt">📞<span>Contacto</span></button>
       <button data-view="vip">💳⭐<span>VIP</span></button>
@@ -935,6 +912,7 @@
     <div id="analyticsView" style="display:none;"></div>
     <div id="ganttView" style="display:none;"></div>
     <div id="vipView" style="display:none;"></div>
+    <div id="ganttFullView" style="display:none;"></div>
 
 
   </div>
@@ -1294,6 +1272,7 @@ function switchView(view){
   document.getElementById('analyticsView').style.display = view === 'analytics' ? '' : 'none';
   document.getElementById('ganttView').style.display = 'none';
   document.getElementById('vipView').style.display = view === 'vip' ? '' : 'none';
+  document.getElementById('ganttFullView').style.display = view === 'ganttfull' ? '' : 'none';
   document.querySelectorAll('#viewToggle button').forEach(b => b.classList.toggle('active', b.dataset.view === view));
 
   // Show/hide the search bar + quick chips + filter button only for the plain 'lista' view
@@ -1305,8 +1284,6 @@ function switchView(view){
   if(view !== 'gantt'){
     const subtabBar = document.getElementById('contactSubtabBar');
     if(subtabBar) subtabBar.remove();
-    const modeBar = document.getElementById('contactModeBar');
-    if(modeBar) modeBar.remove();
   }
 
   if(view === 'analytics'){
@@ -1314,6 +1291,9 @@ function switchView(view){
   }
   if(view === 'gantt'){
     renderContactCards();
+  }
+  if(view === 'ganttfull'){
+    renderGanttFullPage();
   }
   if(view === 'lista'){
     render();
@@ -1373,6 +1353,7 @@ function applyEditToPatient(id, edit){
   if(edit.esMiembroVIP !== undefined) p.esMiembroVIP = edit.esMiembroVIP;
   if(edit._noQuiereVolver !== undefined) p._noQuiereVolver = edit._noQuiereVolver;
   if(edit._motivoPerdida !== undefined) p._motivoPerdida = edit._motivoPerdida;
+  if(edit._sinRespuesta !== undefined) p._sinRespuesta = edit._sinRespuesta;
   p._editado = true;
 }
 
@@ -1563,17 +1544,17 @@ let contactSubTab = 'contactar'; // 'todos' | 'contactar' | 'agendados' | 'perdi
 function getContactBuckets(){
   const withRecall = DATA.filter(p => p.recallDias != null);
   const perdidos = withRecall.filter(p => p._noQuiereVolver);
-  const agendados = withRecall.filter(p => !p._noQuiereVolver && p._seguimientoSecretaria && p._seguimientoSecretaria.fecha);
-  const contactar = withRecall.filter(p => !p._noQuiereVolver && !(p._seguimientoSecretaria && p._seguimientoSecretaria.fecha));
+  const sinRespuesta = withRecall.filter(p => !p._noQuiereVolver && p._sinRespuesta);
+  const agendados = withRecall.filter(p => !p._noQuiereVolver && !p._sinRespuesta && p._seguimientoSecretaria && p._seguimientoSecretaria.fecha);
+  const contactar = withRecall.filter(p => !p._noQuiereVolver && !p._sinRespuesta && !(p._seguimientoSecretaria && p._seguimientoSecretaria.fecha));
   return {
     todos: withRecall.sort((a,b)=>a.recallDias-b.recallDias),
     contactar: contactar.sort((a,b)=>a.recallDias-b.recallDias),
     agendados: agendados.sort((a,b)=> new Date(b._seguimientoSecretaria.registradoEl||0) - new Date(a._seguimientoSecretaria.registradoEl||0)),
+    sinrespuesta: sinRespuesta.sort((a,b)=>a.recallDias-b.recallDias),
     perdidos: perdidos.sort((a,b)=>a.recallDias-b.recallDias),
   };
 }
-
-let contactViewMode = 'tarjetas'; // 'tarjetas' | 'gantt'
 
 function renderContactCards(){
   const list = document.getElementById('patientList');
@@ -1594,35 +1575,15 @@ function renderContactCards(){
     <button class="cst-btn ${contactSubTab==='todos'?'active':''}" data-sub="todos">Todos <span>${buckets.todos.length}</span></button>
     <button class="cst-btn ${contactSubTab==='contactar'?'active':''}" data-sub="contactar">Contactar <span>${buckets.contactar.length}</span></button>
     <button class="cst-btn ${contactSubTab==='agendados'?'active':''}" data-sub="agendados">Agendados <span>${buckets.agendados.length}</span></button>
+    <button class="cst-btn ${contactSubTab==='sinrespuesta'?'active':''}" data-sub="sinrespuesta">Sin respuesta <span>${buckets.sinrespuesta.length}</span></button>
     <button class="cst-btn ${contactSubTab==='perdidos'?'active':''}" data-sub="perdidos">Perdidos <span>${buckets.perdidos.length}</span></button>
   `;
   subtabBar.querySelectorAll('.cst-btn').forEach(btn => {
     btn.addEventListener('click', () => { contactSubTab = btn.dataset.sub; renderContactCards(); });
   });
 
-  // View mode toggle (Tarjetas vs Carta Gantt) lives right below the sub-tabs
-  let modeBar = document.getElementById('contactModeBar');
-  if(!modeBar){
-    modeBar = document.createElement('div');
-    modeBar.id = 'contactModeBar';
-    modeBar.className = 'contact-mode-bar';
-    list.parentNode.insertBefore(modeBar, list);
-  }
-  modeBar.innerHTML = `
-    <button class="cmb-btn ${contactViewMode==='tarjetas'?'active':''}" data-mode="tarjetas">🗂️ Tarjetas</button>
-    <button class="cmb-btn ${contactViewMode==='gantt'?'active':''}" data-mode="gantt">📊 Carta Gantt</button>
-  `;
-  modeBar.querySelectorAll('.cmb-btn').forEach(btn => {
-    btn.addEventListener('click', () => { contactViewMode = btn.dataset.mode; renderContactCards(); });
-  });
-
   const rows = (buckets[contactSubTab] || buckets.todos).slice(0, MAX_RENDER);
   info.textContent = `${(buckets[contactSubTab]||buckets.todos).length.toLocaleString('es-CL')} pacientes`;
-
-  if(contactViewMode === 'gantt'){
-    renderGanttChart(buckets[contactSubTab] || buckets.todos, list, emptyState);
-    return;
-  }
 
   if(rows.length === 0){
     list.innerHTML = '';
@@ -1651,6 +1612,7 @@ function renderContactCards(){
     const waLink = p.telefono ? `https://wa.me/${p.telefono.replace(/\D/g,'')}` : null;
     const yaSeguido = p._seguimientoSecretaria && p._seguimientoSecretaria.fecha;
     const perdido = !!p._noQuiereVolver;
+    const sinResp = !!p._sinRespuesta;
     const vipTag = p.esMiembroVIP ? '<span class="badge badge-vip">💳⭐ VIP</span>' : '';
     const alertTag = p.tieneAlertaMedica ? '<span class="alert-icon">⚕️</span>' : '';
 
@@ -1671,6 +1633,7 @@ function renderContactCards(){
           <button class="cc-track-btn ${yaSeguido ? 'done' : ''}" data-track-idx="${idx}" title="Marcar seguimiento">
             ${yaSeguido ? '✅' : '➡️'}
           </button>
+          <button class="cc-noresp-btn ${sinResp?'active':''}" data-noresp2-idx="${idx}" title="Escribí pero no respondió">🔇</button>
           <button class="cc-reject-btn ${perdido ? 'active' : ''}" data-reject-idx="${idx}" title="${perdido ? 'Volver a contactar' : 'No quiere volver'}">${perdido ? '↩️' : '✕'}</button>
         </div>
       </div>
@@ -1681,8 +1644,19 @@ function renderContactCards(){
 
   list.querySelectorAll('.contact-card').forEach(card => {
     card.addEventListener('click', (e) => {
-      if(e.target.closest('.cc-wa-btn') || e.target.closest('.cc-track-btn') || e.target.closest('.cc-reject-btn')) return;
+      if(e.target.closest('.cc-wa-btn') || e.target.closest('.cc-track-btn') || e.target.closest('.cc-reject-btn') || e.target.closest('.cc-noresp-btn')) return;
       openProfile(DATA[parseInt(card.dataset.idx)]);
+    });
+  });
+
+  list.querySelectorAll('.cc-noresp-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const p = DATA[parseInt(btn.dataset.noresp2Idx)];
+      if(!isAdmin){ alert('Necesitas iniciar sesión como administrador.'); return; }
+      const ok = await saveEdit(p.id, { _sinRespuesta: !p._sinRespuesta });
+      if(ok){ buildKPIs(); renderContactCards(); }
+      else { alert('No se pudo guardar. ¿Sigues con sesión iniciada?'); }
     });
   });
 
@@ -1845,6 +1819,8 @@ function renderGanttChart(patients, list, emptyState){
         const waLink = p.telefono ? `https://wa.me/${p.telefono.replace(/\D/g,'')}` : null;
         const barLeft = Math.min(pos, todayPos);
         const barWidth = Math.max(Math.abs(pos - todayPos), 0.5);
+        const perdido = !!p._noQuiereVolver;
+        const sinRespuesta = !!p._sinRespuesta;
         return `
           <div class="gantt-row" data-idx="${idx}">
             <div class="gantt-name">
@@ -1858,7 +1834,9 @@ function renderGanttChart(patients, list, emptyState){
             </div>
             <div class="gantt-actions">
               <span class="gantt-days" style="color:${color};">${label}</span>
-              ${waLink ? `<a href="${waLink}" target="_blank" class="gantt-wa-btn">📱</a>` : ''}
+              ${waLink ? `<a href="${waLink}" target="_blank" class="gantt-wa-btn" title="WhatsApp">📱</a>` : ''}
+              <button class="gantt-noresp-btn ${sinRespuesta?'active':''}" data-noresp-idx="${idx}" title="Escribí pero no respondió">🔇</button>
+              <button class="gantt-reject-btn ${perdido?'active':''}" data-rejectg-idx="${idx}" title="${perdido?'Volver a contactar':'No quiere volver'}">${perdido?'↩️':'✕'}</button>
             </div>
           </div>
         `;
@@ -1867,12 +1845,60 @@ function renderGanttChart(patients, list, emptyState){
     </div>
   `;
 
+  list.querySelectorAll('.gantt-noresp-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const p = DATA[parseInt(btn.dataset.norespIdx)];
+      if(!isAdmin){ alert('Necesitas iniciar sesión como administrador.'); return; }
+      const ok = await saveEdit(p.id, { _sinRespuesta: !p._sinRespuesta });
+      if(ok){ buildKPIs(); renderContactCards(); }
+      else { alert('No se pudo guardar. ¿Sigues con sesión iniciada?'); }
+    });
+  });
+
+  list.querySelectorAll('.gantt-reject-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const p = DATA[parseInt(btn.dataset.rejectgIdx)];
+      if(p._noQuiereVolver){ restoreFromLost(p); }
+      else { openLostReasonPopup(p); }
+    });
+  });
+
   list.querySelectorAll('.gantt-row').forEach(row => {
     row.addEventListener('click', (e) => {
-      if(e.target.closest('.gantt-wa-btn')) return;
+      if(e.target.closest('.gantt-wa-btn') || e.target.closest('.gantt-noresp-btn') || e.target.closest('.gantt-reject-btn')) return;
       openProfile(DATA[parseInt(row.dataset.idx)]);
     });
   });
+}
+
+let ganttFullSubTab = 'todos';
+
+function renderGanttFullPage(){
+  const container = document.getElementById('ganttFullView');
+  const buckets = getContactBuckets();
+
+  container.innerHTML = `
+    <div class="contact-subtabs" id="ganttFullSubtabs">
+      <button class="cst-btn ${ganttFullSubTab==='todos'?'active':''}" data-gfsub="todos">Todos <span>${buckets.todos.length}</span></button>
+      <button class="cst-btn ${ganttFullSubTab==='contactar'?'active':''}" data-gfsub="contactar">Contactar <span>${buckets.contactar.length}</span></button>
+      <button class="cst-btn ${ganttFullSubTab==='agendados'?'active':''}" data-gfsub="agendados">Agendados <span>${buckets.agendados.length}</span></button>
+      <button class="cst-btn ${ganttFullSubTab==='sinrespuesta'?'active':''}" data-gfsub="sinrespuesta">Sin respuesta <span>${buckets.sinrespuesta.length}</span></button>
+      <button class="cst-btn ${ganttFullSubTab==='perdidos'?'active':''}" data-gfsub="perdidos">Perdidos <span>${buckets.perdidos.length}</span></button>
+    </div>
+    <div class="results-count" id="ganttFullCount"></div>
+    <div id="ganttFullList"></div>
+    <div class="empty-state" id="ganttFullEmpty" style="display:none;"></div>
+  `;
+
+  container.querySelectorAll('[data-gfsub]').forEach(btn => {
+    btn.addEventListener('click', () => { ganttFullSubTab = btn.dataset.gfsub; renderGanttFullPage(); });
+  });
+
+  const rows = buckets[ganttFullSubTab] || buckets.todos;
+  document.getElementById('ganttFullCount').textContent = `${rows.length.toLocaleString('es-CL')} pacientes`;
+  renderGanttChart(rows, document.getElementById('ganttFullList'), document.getElementById('ganttFullEmpty'));
 }
 
 function renderVipView(){
