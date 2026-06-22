@@ -653,9 +653,22 @@
   }
   .cst-btn.active{ background:var(--primary); color:white; border-color:var(--primary); }
   .cst-btn.active span{ color:white; }
+  .contact-mode-bar{
+    display:flex; gap:8px; margin-bottom:14px;
+  }
+  .cmb-btn{
+    flex:1; background:var(--surface); border:1.5px solid var(--border);
+    border-radius:10px; padding:9px; font-size:0.8rem; font-weight:700;
+    color:var(--ink-soft); cursor:pointer; text-align:center;
+  }
+  .cmb-btn.active{ background:var(--primary-light); color:white; border-color:var(--primary-light); }
   .cc-tracked-info{
     margin-top:8px; font-size:0.74rem; color:var(--primary);
     background:var(--primary-pale); padding:6px 10px; border-radius:8px;
+  }
+  .cc-lost-info{
+    margin-top:8px; font-size:0.74rem; color:var(--red);
+    background:var(--red-bg); padding:6px 10px; border-radius:8px;
   }
 
   /* ============ VIP TOGGLE BUTTON ============ */
@@ -995,6 +1008,18 @@
   </div>
 </div>
 
+<div class="edit-form-overlay" id="lostReasonOverlay">
+  <div class="edit-form-panel">
+    <div class="edit-form-header">
+      <h3>✕ Marcar como perdido</h3>
+      <button class="profile-close-btn" id="closeLostReasonBtn" style="background:rgba(0,0,0,0.08); color:var(--ink);">✕</button>
+    </div>
+    <div id="lostReasonBody"></div>
+    <button class="filter-apply-btn" id="saveLostReasonBtn" style="background:var(--red);">Marcar como perdido</button>
+    <div class="edit-form-note">Pasará a la pestaña "Perdidos". Puedes revertirlo después haciendo clic en ↩️.</div>
+  </div>
+</div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, collection, getDocs, doc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -1280,6 +1305,8 @@ function switchView(view){
   if(view !== 'gantt'){
     const subtabBar = document.getElementById('contactSubtabBar');
     if(subtabBar) subtabBar.remove();
+    const modeBar = document.getElementById('contactModeBar');
+    if(modeBar) modeBar.remove();
   }
 
   if(view === 'analytics'){
@@ -1344,6 +1371,8 @@ function applyEditToPatient(id, edit){
   if(edit.segmento !== undefined) p.segmento = edit.segmento || p.segmento;
   if(edit._seguimientoSecretaria !== undefined) p._seguimientoSecretaria = edit._seguimientoSecretaria;
   if(edit.esMiembroVIP !== undefined) p.esMiembroVIP = edit.esMiembroVIP;
+  if(edit._noQuiereVolver !== undefined) p._noQuiereVolver = edit._noQuiereVolver;
+  if(edit._motivoPerdida !== undefined) p._motivoPerdida = edit._motivoPerdida;
   p._editado = true;
 }
 
@@ -1544,6 +1573,8 @@ function getContactBuckets(){
   };
 }
 
+let contactViewMode = 'tarjetas'; // 'tarjetas' | 'gantt'
+
 function renderContactCards(){
   const list = document.getElementById('patientList');
   const emptyState = document.getElementById('emptyState');
@@ -1569,8 +1600,29 @@ function renderContactCards(){
     btn.addEventListener('click', () => { contactSubTab = btn.dataset.sub; renderContactCards(); });
   });
 
+  // View mode toggle (Tarjetas vs Carta Gantt) lives right below the sub-tabs
+  let modeBar = document.getElementById('contactModeBar');
+  if(!modeBar){
+    modeBar = document.createElement('div');
+    modeBar.id = 'contactModeBar';
+    modeBar.className = 'contact-mode-bar';
+    list.parentNode.insertBefore(modeBar, list);
+  }
+  modeBar.innerHTML = `
+    <button class="cmb-btn ${contactViewMode==='tarjetas'?'active':''}" data-mode="tarjetas">🗂️ Tarjetas</button>
+    <button class="cmb-btn ${contactViewMode==='gantt'?'active':''}" data-mode="gantt">📊 Carta Gantt</button>
+  `;
+  modeBar.querySelectorAll('.cmb-btn').forEach(btn => {
+    btn.addEventListener('click', () => { contactViewMode = btn.dataset.mode; renderContactCards(); });
+  });
+
   const rows = (buckets[contactSubTab] || buckets.todos).slice(0, MAX_RENDER);
   info.textContent = `${(buckets[contactSubTab]||buckets.todos).length.toLocaleString('es-CL')} pacientes`;
+
+  if(contactViewMode === 'gantt'){
+    renderGanttChart(buckets[contactSubTab] || buckets.todos, list, emptyState);
+    return;
+  }
 
   if(rows.length === 0){
     list.innerHTML = '';
@@ -1619,10 +1671,11 @@ function renderContactCards(){
           <button class="cc-track-btn ${yaSeguido ? 'done' : ''}" data-track-idx="${idx}" title="Marcar seguimiento">
             ${yaSeguido ? '✅' : '➡️'}
           </button>
-          <button class="cc-reject-btn ${perdido ? 'active' : ''}" data-reject-idx="${idx}" title="No quiere volver">✕</button>
+          <button class="cc-reject-btn ${perdido ? 'active' : ''}" data-reject-idx="${idx}" title="${perdido ? 'Volver a contactar' : 'No quiere volver'}">${perdido ? '↩️' : '✕'}</button>
         </div>
       </div>
       ${yaSeguido ? `<div class="cc-tracked-info">✓ Agendado: ${fmtDate(p._seguimientoSecretaria.fecha)} — ${escapeHtml(p._seguimientoSecretaria.comentario||'')}</div>` : ''}
+      ${perdido && p._motivoPerdida ? `<div class="cc-lost-info">✕ Motivo: ${escapeHtml(p._motivoPerdida.motivo||'')}${p._motivoPerdida.comentario ? ' — ' + escapeHtml(p._motivoPerdida.comentario) : ''}</div>` : ''}
     </div>`;
   }).join('');
 
@@ -1641,14 +1694,183 @@ function renderContactCards(){
   });
 
   list.querySelectorAll('.cc-reject-btn').forEach(btn => {
-    btn.addEventListener('click', async (e) => {
+    btn.addEventListener('click', (e) => {
       e.stopPropagation();
+      e.preventDefault();
       const p = DATA[parseInt(btn.dataset.rejectIdx)];
-      const newVal = !p._noQuiereVolver;
-      btn.disabled = true;
-      const ok = await saveEdit(p.id, { _noQuiereVolver: newVal });
-      if(ok){ buildKPIs(); renderContactCards(); }
-      else { btn.disabled = false; alert('No se pudo guardar.'); }
+      if(p._noQuiereVolver){
+        // Already marked as lost -> clicking again restores them to "contactar" directly
+        restoreFromLost(p);
+      } else {
+        openLostReasonPopup(p);
+      }
+    });
+  });
+}
+
+// ============================================================
+// PERDIDOS: popup para motivo de perdida + funcion de restaurar
+// ============================================================
+let pendingLostId = null;
+
+function openLostReasonPopup(p){
+  pendingLostId = p.id;
+  const overlay = document.getElementById('lostReasonOverlay');
+  const body = document.getElementById('lostReasonBody');
+  body.innerHTML = `
+    <div class="tracking-patient-name">${escapeHtml(p.nombre)}</div>
+    <div class="edit-field">
+      <label>¿Por qué no quiere volver?</label>
+      <select id="lostReasonSelect">
+        <option value="Precio">Precio</option>
+        <option value="Se cambio de clinica">Se cambió de clínica</option>
+        <option value="No contesta">No contesta / no responde</option>
+        <option value="Viaje o cambio de ciudad">Viaje o cambio de ciudad</option>
+        <option value="Insatisfaccion con tratamiento">Insatisfacción con tratamiento</option>
+        <option value="Otro">Otro</option>
+      </select>
+    </div>
+    <div class="edit-field">
+      <label>Comentario adicional (opcional)</label>
+      <textarea id="lostReasonComment" rows="2" placeholder="Detalle adicional..."></textarea>
+    </div>
+    <div id="lostReasonStatus" class="edit-save-status"></div>
+  `;
+  overlay.classList.add('show');
+}
+
+function closeLostReasonPopup(){
+  document.getElementById('lostReasonOverlay').classList.remove('show');
+  pendingLostId = null;
+}
+
+document.getElementById('closeLostReasonBtn').addEventListener('click', closeLostReasonPopup);
+document.getElementById('lostReasonOverlay').addEventListener('click', (e) => {
+  if(e.target.id === 'lostReasonOverlay') closeLostReasonPopup();
+});
+
+document.getElementById('saveLostReasonBtn').addEventListener('click', async () => {
+  if(!pendingLostId) return;
+  const motivo = document.getElementById('lostReasonSelect').value;
+  const comentario = document.getElementById('lostReasonComment').value.trim();
+  const statusEl = document.getElementById('lostReasonStatus');
+
+  if(!isAdmin){
+    statusEl.textContent = '✗ Necesitas iniciar sesión como administrador para guardar cambios.';
+    statusEl.className = 'edit-save-status error';
+    return;
+  }
+
+  statusEl.textContent = 'Guardando...';
+  statusEl.className = 'edit-save-status saving';
+
+  const ok = await saveEdit(pendingLostId, {
+    _noQuiereVolver: true,
+    _motivoPerdida: { motivo, comentario, fecha: new Date().toISOString() },
+  });
+
+  if(ok){
+    statusEl.textContent = '✓ Guardado';
+    statusEl.className = 'edit-save-status success';
+    setTimeout(() => {
+      closeLostReasonPopup();
+      buildKPIs();
+      renderContactCards();
+    }, 400);
+  } else {
+    statusEl.textContent = '✗ Error al guardar. ¿Sigues con sesión iniciada?';
+    statusEl.className = 'edit-save-status error';
+  }
+});
+
+async function restoreFromLost(p){
+  if(!isAdmin){
+    alert('Necesitas iniciar sesión como administrador para hacer esto.');
+    return;
+  }
+  const ok = await saveEdit(p.id, { _noQuiereVolver: false });
+  if(ok){
+    buildKPIs();
+    renderContactCards();
+  } else {
+    alert('No se pudo guardar. ¿Sigues con sesión iniciada?');
+  }
+}
+
+function renderGanttChart(patients, list, emptyState){
+  if(!patients || patients.length === 0){
+    list.innerHTML = '';
+    emptyState.style.display = 'block';
+    return;
+  }
+  emptyState.style.display = 'none';
+
+  const rows = patients.slice(0, 150);
+  const minDias = Math.max(rows.reduce((m,p) => Math.min(m, p.recallDias), 0), -180);
+  const maxDias = Math.min(rows.reduce((m,p) => Math.max(m, p.recallDias), 0), 90);
+  const range = Math.max(maxDias - minDias, 1);
+  const todayPos = Math.max(0, Math.min(100, ((0 - minDias) / range) * 100));
+
+  function dateLabelFor(dias){
+    const d = new Date();
+    d.setDate(d.getDate() + dias);
+    return d.toLocaleDateString('es-CL', {day:'2-digit', month:'short'});
+  }
+  function urgColor(urgencia){
+    const map = {
+      'ATRASADO - Contactar ya': '#C0392B',
+      'Proximo (0-14 dias)': '#A8791A',
+      'Proximo mes': '#1B6E69',
+      'Atrasado (3-12 meses vencido)': '#C8743A',
+      'Mas adelante': '#6B6B66',
+      'Inactivo largo plazo (+1 año vencido)': '#8c8c86',
+    };
+    return map[urgencia] || '#6B6B66';
+  }
+
+  list.innerHTML = `
+    <div class="gantt-axis">
+      <span>${dateLabelFor(minDias)}</span>
+      <span class="gantt-axis-today">Hoy (${dateLabelFor(0)})</span>
+      <span>${dateLabelFor(maxDias)}</span>
+    </div>
+    <div class="gantt-wrap">
+      ${rows.map(p => {
+        const idx = DATA.indexOf(p);
+        const dias = p.recallDias;
+        const rawPos = ((dias - minDias) / range) * 100;
+        const pos = Math.max(0, Math.min(100, rawPos));
+        const color = urgColor(p.urgencia);
+        const label = dias < 0 ? `Atrasado ${Math.abs(dias)}d` : (dias === 0 ? 'Hoy' : `En ${dias}d`);
+        const waLink = p.telefono ? `https://wa.me/${p.telefono.replace(/\D/g,'')}` : null;
+        const barLeft = Math.min(pos, todayPos);
+        const barWidth = Math.max(Math.abs(pos - todayPos), 0.5);
+        return `
+          <div class="gantt-row" data-idx="${idx}">
+            <div class="gantt-name">
+              ${p.tieneAlertaMedica ? '<span class="alert-icon">⚕️</span>' : ''}${escapeHtml(p.nombre)}
+              <span class="gantt-cat">${escapeHtml(p.recallCategoria || '')}</span>
+            </div>
+            <div class="gantt-track">
+              <div class="gantt-today-line" style="left:${todayPos}%"></div>
+              <div class="gantt-bar" style="left:${barLeft}%; width:${barWidth}%; background:${color};" title="${label}"></div>
+              <div class="gantt-marker" style="left:${pos}%; background:${color};"></div>
+            </div>
+            <div class="gantt-actions">
+              <span class="gantt-days" style="color:${color};">${label}</span>
+              ${waLink ? `<a href="${waLink}" target="_blank" class="gantt-wa-btn">📱</a>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('')}
+      ${patients.length > 150 ? `<div class="gantt-more">+ ${patients.length - 150} más — usa los filtros para ver el resto</div>` : ''}
+    </div>
+  `;
+
+  list.querySelectorAll('.gantt-row').forEach(row => {
+    row.addEventListener('click', (e) => {
+      if(e.target.closest('.gantt-wa-btn')) return;
+      openProfile(DATA[parseInt(row.dataset.idx)]);
     });
   });
 }
