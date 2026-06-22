@@ -1275,6 +1275,13 @@ function switchView(view){
   document.getElementById('searchInput').closest('.search-bar').style.display = view === 'lista' ? '' : 'none';
   document.getElementById('quickChips').style.display = view === 'lista' ? '' : 'none';
 
+  // The contact sub-tab bar (Todos/Contactar/Agendados/Perdidos) only belongs to the 'gantt' view.
+  // Remove it whenever we're not in that view, so it never lingers stuck over the wrong content.
+  if(view !== 'gantt'){
+    const subtabBar = document.getElementById('contactSubtabBar');
+    if(subtabBar) subtabBar.remove();
+  }
+
   if(view === 'analytics'){
     renderAnalytics();
   }
